@@ -1,0 +1,2619 @@
+//////////////////////////////////////////////////////////////////////
+/// \mainpage LabelControls Documentation
+///
+/// \section intro_sec Introduction
+///
+/// %LabelControls is a collection of label-control like ActiveX controls. The \c WindowedLabel control
+/// wraps the \c Static window class and the \c SysLink control wraps the \c SysLink window class, but
+/// isn't available in the ANSI version of this control library. The \c WindowlessLabel control isn't
+/// based on a window class, but is a custom windowless control. Because it doesn't create a real window,
+/// it is more lightweight than the \c WindowedLabel control.\n
+/// The controls are optimized for Visual Basic 6.0, but should also work in any other environment that
+/// supports COM controls.
+///
+/// \section basics_sec Basics
+///
+/// The controls superclass the mentioned native window classes of Windows: \c Static and \c SysLink.
+/// Although I tried to wrap all features of these window classes (status: Windows 10), some things
+/// may be missing. In these cases you usually may use the Win32 API and handle the controls as native
+/// windows of the corresponding class. One of my goals was it to create controls that may be controlled
+/// via API as well as via the classes that I implemented.
+///
+/// \section reqs_sec Requirements
+///
+/// %LabelControls ANSI runs on the following operating systems:
+/// - Windows XP (SP3 or later) - <strong>limited support</strong>
+/// - Windows Server 2003 (SP2 or later) - <strong>limited support</strong>
+/// - Windows Vista (SP2 or later) - <strong>limited support</strong>
+/// - Windows Server 2008 (SP2 or later) - <strong>limited support</strong>
+/// - Windows 7 (SP1 or later) - <strong>limited support</strong>
+/// - Windows Server 2008 R2 (SP1 or later) - <strong>limited support</strong>
+/// - Windows 8 - <strong>limited support</strong>
+/// - Windows Server 2012 - <strong>limited support</strong>
+/// - Windows 8.1 - <strong>limited support</strong>
+/// - Windows Server 2012 R2 - <strong>limited support</strong>
+/// - Windows 10 - <strong>limited support</strong>
+/// - Windows Server 2016 - <strong>limited support</strong>
+///
+/// Some features have additional requirements which are mentioned in the affected feature's
+/// documentation.\n
+/// Limited support means, that I won't invest much work to support those systems. If a feature works on
+/// a system tagged with "limited support" - fine; if it does not and it's easy to fix, I'll fix it, but if
+/// it's difficult to fix, I probably won't fix it. Also I will test the control much less on those systems.
+///
+/// \section support_sec Support
+///
+/// Although there's no entitlement to support, you've good chances to get help if you either post
+/// to the <a href="https://www.timosoft-software.de/forum/viewforum.php?f=45">forums</a> or
+/// <a href="mailto:Timo@TimoSoft-Software.de">send me a mail</a>.\n
+/// Bugs and feature requests should be entered into the <a href="https://bugtracker.timosoft-software.de">bug tracking system</a>.
+///
+/// \section lic_sec License
+///
+/// <pre>
+///      MIT License
+///
+///      Copyright (c) 2013-2018 Timo Kunze
+///
+///      Permission is hereby granted, free of charge, to any person obtaining a copy
+///      of this software and associated documentation files (the "Software"), to deal
+///      in the Software without restriction, including without limitation the rights
+///      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+///      copies of the Software, and to permit persons to whom the Software is
+///      furnished to do so, subject to the following conditions:
+///
+///      The above copyright notice and this permission notice shall be included in all
+///      copies or substantial portions of the Software.
+///
+///      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+///      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+///      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+///      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+///      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+///      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+///      SOFTWARE.
+/// </pre>
+///
+/// \section acks_sec Acknowledgements
+///
+/// Thanks go to:
+/// - <a href="https://www.winehq.com">Wine Headquarters</a>, because Wine helped me a lot on
+///   understanding how Windows is working.
+/// - Microsoft, for ATL, WTL and Visual Studio - great libraries and a great IDE
+/// - Igor Tandetnik, for his great help on learning ATL and WTL
+/// - Dimitri van Heesch, for Doxygen
+/// - <a href="http://www.zabkat.com/">Nikos Bozinis</a>, for his awesome help with the Vista drag'n'drop
+///   stuff.
+/// - <a href="https://www.dateicommander.de">Christian Lütgens</a>, for his great work as beta-tester
+///   and for his help when I needed a 2nd opinion on some decisions.
+/// - All donators
+/// - For great music: Heaven Shall Burn, Arch Enemy, Machine Head, Trivium, Deadlock, Draconian, Soulfly,
+///   Delain, Lacuna Coil, Ensiferum, Epica, Sirenia, Tristania, Nightwish, Battlelore, Amon Amarth, Volbeat,
+///   Guns N' Roses
+///
+/// \section faq_sec FAQ
+///
+/// <strong>1. Why is the \c Font property ignored?</strong>\n
+/// It isn't. My controls have a property \c UseSystemFont which defaults to \c True. This property tells
+/// the control to use the system font rather than the font set by the \c Font property.\n
+/// Why is this property's default \c True? Well, if I set system wide settings (like fonts) I expect all
+/// applications to follow them. Unfortunately ignoring system wide settings seems to be trendy, so see
+/// my decision as an educational measure.
+///
+/// <strong>2. Why is event xyz not fired?</strong>\n
+/// Firing an event is relative time-consuming, even if the event isn't handled by the application at all.
+/// Therefore I implemented a \c DisabledEvents property which can be used to deactivate certain events.\n
+/// By default many events are deactivated.
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+/// \namespace LblCtlsLibA
+/// \brief <em>Contains COM definitions for the controls' public interfaces</em>
+///
+/// This is the ANSI version of the LabelControls COM library.
+//////////////////////////////////////////////////////////////////////
+
+
+#include "olectl.h"
+#include "CompilerFlags.h"
+#include "DispIDs.h"
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+	// interface is not automation marshaling conformant, requires Windows NT 4.0 SP4 or greater
+	midl_pragma warning(disable: 2039)
+	// identifier length exceeds 31 characters
+	midl_pragma warning(disable: 2111)
+	// too many methods in the interface, requires Windows NT 4.0 SP3 or greater
+	midl_pragma warning(disable: 2362)
+#endif
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+
+[
+	uuid(F6099CD4-9726-4AFE-B3A0-6C00C5ECC3A3),
+	version(1.2),
+	helpstring("TimoSoft LabelControls 1.2 (ANSI)")
+]
+library LblCtlsLibA
+{
+	importlib("stdole2.tlb");
+
+
+	/// \brief <em>Constants used with the \c Appearance properties</em>
+	///
+	/// \sa IWindowedLabel::Appearance, IWindowlessLabel::Appearance
+	[helpstring("Constants used with the 'Appearance' properties.")]
+	typedef enum AppearanceConstants {
+		/// \brief The control is drawn with a flat border
+		[helpstring("The control is drawn flat.")]
+		a2D,
+		/// \brief The control is drawn with a normal 3D border
+		[helpstring("The control is drawn with a normal 3D border.")]
+		a3D,
+		/// \brief The control is drawn with a light 3D border
+		[helpstring("The control is drawn with a light 3D border.")]
+		a3DLight
+	} AppearanceConstants;
+
+	/// \brief <em>Constants used with the \c AutoSize properties</em>
+	///
+	/// \sa IWindowedLabel::AutoSize, IWindowlessLabel::AutoSize
+	[helpstring("Constants used with the 'AutoSize' properties.")]
+	typedef enum AutoSizeConstants {
+		/// \brief The control does not adjust its size automatically to best fit its content
+		[helpstring("The control does not adjust its size automatically to best fit its content.")]
+		asNone,
+		/// \brief The control adjusts its size automatically to best fit its content
+		///
+		/// The control adjusts its size automatically to best fit its content. If size needs to be increased,
+		/// the control's width will be increased.
+		///
+		/// \sa asGrowVertically
+		[helpstring("The control adjusts its size automatically to best fit its content. If size needs to be increased, the control's width will be increased.")]
+		asGrowHorizontally,
+		/// \brief The control adjusts its size automatically to best fit its content
+		///
+		/// The control adjusts its size automatically to best fit its content. If size needs to be increased,
+		/// the control's height will be increased.
+		///
+		/// \remarks If the \c WordWrapping property is set to \c wwManual or \c wwSingleLine, the
+		///          \c asGrowVertically mode causes the same behavior as the \c asGrowHorizontally mode.\n
+		///          The control's text is wrapped to new lines based on word boundaries. Therefore the control
+		///          may also adjust its size horizontally.
+		///
+		/// \sa asGrowHorizontally, IWindowlessLabel::WordWrapping, WordWrappingConstants
+		[helpstring("The control adjusts its size automatically to best fit its content. If size needs to be increased, the control's height will be increased.")]
+		asGrowVertically
+	} AutoSizeConstants;
+
+	/// \brief <em>Constants used with the \c BackStyle properties</em>
+	///
+	/// \sa IWindowedLabel::BackStyle, IWindowlessLabel::BackStyle
+	[helpstring("Constants used with the 'BackStyle' properties.")]
+	typedef enum BackStyleConstants {
+		/// \brief The control is drawn with a transparent background
+		///
+		/// \remarks The \c WindowedLabel control supports a transparent background only if it is themed.
+		///          Additionally this control does not support real transparency, i.e. it appears transparent
+		///          on themed container controls like tab strips, but appears opaque on unthemed containers
+		///          like a VB6 form.
+		[helpstring("The control is drawn with a transparent background. See the helpfile for important notes.")]
+		bstTransparent,
+		/// \brief The control is drawn with an opaque background
+		[helpstring("The control is drawn with an opaque background.")]
+		bstOpaque
+	} BackStyleConstants;
+
+	/// \brief <em>Constants used with the \c BorderStyle properties</em>
+	///
+	/// \sa IWindowedLabel::BorderStyle, IWindowlessLabel::BorderStyle
+	[helpstring("Constants used with the 'BorderStyle' properties.")]
+	typedef enum BorderStyleConstants {
+		/// \brief The control is drawn without an inner border
+		[helpstring("The control is drawn without an additional border.")]
+		bsNone,
+		/// \brief The control is drawn with an inner border
+		[helpstring("The control is drawn with an additional border.")]
+		bsFixedSingle
+	} BorderStyleConstants;
+
+	/// \brief <em>Flags used with the \c DisabledEvents properties</em>
+	///
+	/// \sa IWindowedLabel::DisabledEvents, IWindowlessLabel::DisabledEvents
+	[helpstring("Flags used with the 'DisabledEvents' properties. They can be combined.")]
+	typedef enum DisabledEventsConstants {
+		/// \brief Mouse events won't be fired
+		///
+		/// The following events won't be fired: \c MouseDown, \c MouseUp, \c MouseEnter, \c MouseHover,
+		/// \c MouseLeave, \c MouseMove
+		///
+		/// \sa _IWindowedLabelEvents::MouseDown, _IWindowedLabelEvents::MouseUp,
+		///     _IWindowedLabelEvents::MouseEnter, _IWindowedLabelEvents::MouseHover,
+		///     _IWindowedLabelEvents::MouseLeave, _IWindowedLabelEvents::MouseMove,\n
+		///     _IWindowlessLabelEvents::MouseDown, _IWindowlessLabelEvents::MouseUp,
+		///     _IWindowlessLabelEvents::MouseEnter, _IWindowlessLabelEvents::MouseHover,
+		///     _IWindowlessLabelEvents::MouseLeave, _IWindowlessLabelEvents::MouseMove
+		[helpstring("Disables the following events: MouseDown, MouseUp, MouseEnter, MouseHover, MouseLeave, MouseMove")]
+		deMouseEvents = 0x01,
+		/// \brief Click events won't be fired
+		///
+		/// The following events won't be fired: \c Click, \c DblClick, \c MClick, \c MDblClick,
+		/// \c RClick, \c RDblClick, \c XClick, \c XDblClick
+		///
+		/// \sa _IWindowedLabelEvents::Click, _IWindowedLabelEvents::DblClick, _IWindowedLabelEvents::MClick,
+		///     _IWindowedLabelEvents::MDblClick, _IWindowedLabelEvents::RClick,
+		///     _IWindowedLabelEvents::RDblClick, _IWindowedLabelEvents::XClick,
+		///     _IWindowedLabelEvents::XDblClick,\n
+		///     _IWindowlessLabelEvents::Click, _IWindowlessLabelEvents::DblClick,
+		///     _IWindowlessLabelEvents::MClick, _IWindowlessLabelEvents::MDblClick,
+		///     _IWindowlessLabelEvents::RClick, _IWindowlessLabelEvents::RDblClick,
+		///     _IWindowlessLabelEvents::XClick, _IWindowlessLabelEvents::XDblClick
+		[helpstring("Disables the following events: Click, DblClick, MClick, MDblClick, RClick, RDblClick, XClick, XDblClick")]
+		deClickEvents = 0x02,
+		/// \brief The \c TextChanged event won't be fired
+		///
+		/// The following event won't be fired: \c TextChanged
+		///
+		/// \sa _IWindowedLabelEvents::TextChanged,\n
+		///     _IWindowlessLabelEvents::TextChanged
+		[helpstring("Disables the following event: TextChanged")]
+		deTextChangedEvents = 0x1000
+	} DisabledEventsConstants;
+
+	/// \brief <em>Constants used with the \c IOLEDataObject::GetDropDescription and IOLEDataObject::SetDropDescription methods</em>
+	///
+	/// \sa IOLEDataObject::GetDropDescription, IOLEDataObject::SetDropDescription
+	[helpstring("Constants used with the 'OLEDataObject.GetDropDescription' and 'OLEDataObject.SetDropDescription' methods.")]
+	typedef enum DropDescriptionIconConstants {
+		/// \brief No drop description is displayed
+		[helpstring("No drop description is displayed.")]
+		ddiNone = -1/*DROPIMAGE_INVALID*/,     // should be 8 (DROPIMAGE_NOIMAGE)
+		/// \brief The drop description icon that visualizes the \c odeNone drop effect is displayed
+		[helpstring("The drop description icon that visualizes the 'odeNone' drop effect is displayed.")]
+		ddiNoDrop = 0/*DROPIMAGE_NONE*/,
+		/// \brief The drop description icon that visualizes the \c odeCopy drop effect is displayed
+		[helpstring("The drop description icon that visualizes the 'odeCopy' drop effect is displayed.")]
+		ddiCopy = 1/*DROPIMAGE_COPY*/,
+		/// \brief The drop description icon that visualizes the \c odeMove drop effect is displayed
+		[helpstring("The drop description icon that visualizes the 'odeMove' drop effect is displayed.")]
+		ddiMove = 2/*DROPIMAGE_MOVE*/,
+		/// \brief The drop description icon that visualizes the \c odeLink drop effect is displayed
+		[helpstring("The drop description icon that visualizes the 'odeLink' drop effect is displayed.")]
+		ddiLink = 4/*DROPIMAGE_LINK*/,
+		/// \brief The drop description icon that visualizes a drop, which causes a metadata change, is displayed
+		[helpstring("The drop description icon that visualizes a drop, which causes a metadata change, is displayed.")]
+		ddiMetadataChange = 6/*DROPIMAGE_LABEL*/,
+		/// \brief The drop description icon that visualizes a warning is displayed
+		[helpstring("The drop description icon that visualizes a warning is displayed.")]
+		ddiWarning = 7/*DROPIMAGE_WARNING*/,
+		/// \brief The default drop description is displayed
+		///
+		/// \remarks Requires Windows 7 or newer.
+		[helpstring("The default drop description is displayed. Requires Windows 7 or newer.")]
+		ddiUseDefault = 8/*DROPIMAGE_NOIMAGE*/     // should be -1 (DROPIMAGE_INVALID)
+	} DropDescriptionIconConstants;
+
+	/// \brief <em>Constants used with the extended mouse button events</em>
+	///
+	/// \sa _IWindowedLabelEvents::MouseDown, _IWindowedLabelEvents::MouseEnter,
+	///     _IWindowedLabelEvents::MouseHover, _IWindowedLabelEvents::MouseLeave,
+	///     _IWindowedLabelEvents::MouseMove, _IWindowedLabelEvents::MouseUp,
+	///     _IWindowedLabelEvents::XClick, _IWindowedLabelEvents::XDblClick,\n
+	///     _IWindowlessLabelEvents::MouseDown, _IWindowlessLabelEvents::MouseEnter,
+	///     _IWindowlessLabelEvents::MouseHover, _IWindowlessLabelEvents::MouseLeave,
+	///     _IWindowlessLabelEvents::MouseMove, _IWindowlessLabelEvents::MouseUp,
+	///     _IWindowlessLabelEvents::XClick, _IWindowlessLabelEvents::XDblClick
+	[helpstring("Constants used with the extended mouse button events.")]
+	typedef enum ExtendedMouseButtonConstants {
+		/// \brief Identifies the first extended mouse button
+		[helpstring("Identifies the first extended mouse button.")]
+		embXButton1 = 0x20,
+		/// \brief Identifies the second extended mouse button
+		[helpstring("Identifies the second extended mouse button.")]
+		embXButton2 = 0x40
+	} ExtendedMouseButtonConstants;
+
+	/// \brief <em>Constants used with the \c HAlignment properties</em>
+	///
+	/// \sa IWindowedLabel::HAlignment, IWindowlessLabel::HAlignment, VAlignmentConstants
+	[helpstring("Constants used with the 'HAlignment' properties.")]
+	typedef enum HAlignmentConstants {
+		/// \brief The control's content is left-aligned
+		[helpstring("The control's content is left-aligned.")]
+		halLeft,
+		/// \brief The control's content is horizontally centered
+		[helpstring("The control's content is horizontally centered.")]
+		halCenter,
+		/// \brief The control's content is right-aligned
+		[helpstring("The control's content is right-aligned.")]
+		halRight
+	} HAlignmentConstants;
+
+	/// \brief <em>Constants used with the \c MousePointer properties</em>
+	///
+	/// \sa IWindowedLabel::MousePointer, IWindowlessLabel::MousePointer
+	[helpstring("Constants used with the 'MousePointer' properties.")]
+	typedef enum MousePointerConstants {
+		/// \brief The default mouse cursor is used
+		[helpstring("The default mouse cursor is used.")]
+		mpDefault,
+		/// \brief The default arrow is used as mouse cursor
+		[helpstring("The default arrow is used as mouse cursor.")]
+		mpArrow,
+		/// \brief A cross is used as mouse cursor
+		[helpstring("A cross is used as mouse cursor.")]
+		mpCross,
+		/// \brief A vertical beam (like in textboxes) is used as mouse cursor
+		[helpstring("A vertical beam (like in textboxes) is used as mouse cursor.")]
+		mpIBeam,
+		/// \brief An icon is used as mouse cursor
+		[helpstring("An icon is used as mouse cursor.")]
+		mpIcon,
+		/// \brief A mouse cursor indicating window sizing is used
+		[helpstring("A mouse cursor indicating window sizing is used.")]
+		mpSize,
+		/// \brief A mouse cursor indicating window sizing is used
+		///
+		/// This is the cursor that is used while resizing a window into the direction of its
+		/// upper-right or lower-left corner.
+		[helpstring("A mouse cursor indicating window sizing to the direction of a window's upper-right or lower-left corner is used.")]
+		mpSizeNESW,
+		/// \brief A mouse cursor indicating window sizing is used
+		///
+		/// This is the cursor that is used while resizing a window into the direction of its upper or
+		/// lower border.
+		[helpstring("A mouse cursor indicating window sizing to the direction of a window's upper or lower border is used.")]
+		mpSizeNS,
+		/// \brief A mouse cursor indicating window sizing is used
+		///
+		/// This is the cursor that is used while resizing a window into the direction of its
+		/// upper-left or lower-right corner.
+		[helpstring("A mouse cursor indicating window sizing to the direction of a window's upper-left or lower-right corner is used.")]
+		mpSizeNWSE,
+		/// \brief A mouse cursor indicating window sizing is used
+		///
+		/// This is the cursor that is used while resizing a window into the direction of its left or
+		/// right border.
+		[helpstring("A mouse cursor indicating window sizing to the direction of a window's left or right border is used.")]
+		mpSizeEW,
+		/// \brief An arrow pointing upwardly is used as mouse cursor
+		[helpstring("An arrow pointing upwardly is used as mouse cursor.")]
+		mpUpArrow,
+		/// \brief An hourglass is used as mouse cursor.
+		[helpstring("An hourglass is used as mouse cursor.")]
+		mpHourglass,
+		/// \brief An mouse cursor indicating that the control can't be a drop target is used
+		[helpstring("An mouse cursor indicating that the control can't be a drop target is used.")]
+		mpNoDrop,
+		/// \brief The default arrow with a small hourglass is used as mouse cursor
+		[helpstring("The default arrow with a small hourglass is used as mouse cursor.")]
+		mpArrowHourglass,
+		/// \brief The default arrow with a small question mark is used as mouse cursor
+		[helpstring("The default arrow with a small question mark is used as mouse cursor.")]
+		mpArrowQuestion,
+		/// \brief A mouse cursor indicating window sizing to all directions is used
+		[helpstring("A mouse cursor indicating window sizing to all directions is used.")]
+		mpSizeAll,
+		/// \brief A hand typically used for hyperlinks is used as mouse cursor
+		[helpstring("A hand typically used for hyperlinks is used as mouse cursor.")]
+		mpHand,
+		/// \brief A mouse cursor indicating that the program waits for some media is used
+		[helpstring("A mouse cursor indicating that the program waits for some media is used.")]
+		mpInsertMedia,
+		/// \brief A mouse cursor indicating scrolling to all directions is used
+		[helpstring("A mouse cursor indicating scrolling to all directions is used.")]
+		mpScrollAll,
+		/// \brief A mouse cursor indicating scrolling upwardly is used
+		[helpstring("A mouse cursor indicating scrolling upwardly is used.")]
+		mpScrollN,
+		/// \brief A mouse cursor indicating scrolling to the window's upper-right corner is used
+		[helpstring("A mouse cursor indicating scrolling to the window's upper-right corner is used.")]
+		mpScrollNE,
+		/// \brief A mouse cursor indicating scrolling to the window's right border is used
+		[helpstring("A mouse cursor indicating scrolling to the window's right border is used.")]
+		mpScrollE,
+		/// \brief A mouse cursor indicating scrolling to the window's lower-right corner is used
+		[helpstring("A mouse cursor indicating scrolling to the window's lower-right corner is used.")]
+		mpScrollSE,
+		/// \brief A mouse cursor indicating scrolling downwards is used
+		[helpstring("A mouse cursor indicating scrolling downwards is used.")]
+		mpScrollS,
+		/// \brief A mouse cursor indicating scrolling to the window's lower-left corner is used
+		[helpstring("A mouse cursor indicating scrolling to the window's lower-left corner is used.")]
+		mpScrollSW,
+		/// \brief A mouse cursor indicating scrolling to the window's left border is used
+		[helpstring("A mouse cursor indicating scrolling to the window's left border is used.")]
+		mpScrollW,
+		/// \brief A mouse cursor indicating scrolling to the window's upper-left corner is used
+		[helpstring("A mouse cursor indicating scrolling to the window's upper-left corner is used.")]
+		mpScrollNW,
+		/// \brief A mouse cursor indicating scrolling upwardly or downwards is used
+		[helpstring("A mouse cursor indicating scrolling upwardly or downwards is used.")]
+		mpScrollNS,
+		/// \brief A mouse cursor indicating scrolling to the window's left or right border is used
+		[helpstring("A mouse cursor indicating scrolling to the window's left or right border is used.")]
+		mpScrollEW,
+		/// \brief The custom mouse cursor defined by the \c MouseIcon property is used
+		[helpstring("The custom mouse cursor defined by the MouseIcon property is used.")]
+		mpCustom = 0x63
+	} MousePointerConstants;
+
+	/// \brief <em>Constants used with OLE drag'n'drop</em>
+	///
+	/// \sa _IWindowedLabelEvents::OLEDragEnter, _IWindowedLabelEvents::OLEDragMouseMove,
+	///     _IWindowedLabelEvents::OLEDragDrop,
+	///     _IWindowlessLabelEvents::OLEDragEnter, _IWindowlessLabelEvents::OLEDragMouseMove,
+	///     _IWindowlessLabelEvents::OLEDragDrop
+	[helpstring("Constants used with the OLEDrag* events.")]
+	typedef enum OLEDropEffectConstants {
+		/// \brief No OLE drag and drop operation has occurred or will occur
+		[helpstring("No OLE drag and drop operation has occurred or will occur.")]
+		odeNone = 0 /*DROPEFFECT_NONE*/,
+		/// \brief A copy has occured or will occur
+		[helpstring("A copy has occured or will occur.")]
+		odeCopy = 1 /*DROPEFFECT_COPY*/,
+		/// \brief A move has occured or will occur
+		[helpstring("A move has occured or will occur.")]
+		odeMove = 2 /*DROPEFFECT_MOVE*/,
+		/// \brief A link has occured or will occur
+		[helpstring("A link has occured or will occur.")]
+		odeLink = 4 /*DROPEFFECT_LINK*/,
+		/// \brief Combination of \c odeCopy and \c odeMove
+		[helpstring("Combination of 'odeCopy' and 'odeMove'.")]
+		odeCopyOrMove = odeCopy | odeMove,
+		/// \brief The drop target window has scrolled or will scroll
+		[helpstring("The drop target window has scrolled or will scroll.")]
+		odeScroll = 0x80000000 /*DROPEFFECT_SCROLL*/
+	} OLEDropEffectConstants;
+
+	/// \brief <em>Constants used to identify the required drawing action during owner-drawing</em>
+	///
+	/// \sa _IWindowedLabelEvents::OwnerDraw
+	[helpstring("Constants used to identify the required drawing action during owner-drawing.")]
+	typedef enum OwnerDrawActionConstants {
+		/// \brief The entire control needs to be drawn
+		[helpstring("The entire control needs to be drawn.")]
+		odaDrawEntire = 0x1 /*ODA_DRAWENTIRE*/
+	} OwnerDrawActionConstants;
+
+	/// \brief <em>Constants used to identify control states during owner-drawing</em>
+	///
+	/// \sa _IWindowedLabelEvents::OwnerDraw
+	[helpstring("Constants used to identify control states during owner-drawing.")]
+	typedef enum OwnerDrawControlStateConstants {
+		/// \brief The control is in no special state
+		[helpstring("The control is in no special state.")]
+		odcsNormal = 0x0,
+		/// \brief The control is in 'hot' state, i. e. it's below the mouse cursor
+		[helpstring("The control is in 'hot' state, i. e. it's below the mouse cursor.")]
+		odcsHot = 0x10,
+		/// \brief The control is disabled
+		[helpstring("The control is disabled.")]
+		odcsDisabled = 0x20,
+		/// \brief The control is drawn without the keyboard accelerator cues
+		[helpstring("The control is drawn without the keyboard accelerator cues.")]
+		odcsNoAccelerator = 0x100
+	} OwnerDrawControlStateConstants;
+
+	/// \brief <em>Flags used with the \c RightToLeft properties</em>
+	///
+	/// \sa IWindowedLabel::RightToLeft, IWindowlessLabel::RightToLeft
+	[helpstring("Flags used with the 'RightToLeft' properties. They can be combined.")]
+	typedef enum RightToLeftConstants {
+		/// \brief Read text from right to left
+		///
+		/// The control's text is read from right to left, but the general layout is left to right.
+		[helpstring("The control's text is read from right to left, but the general layout is left to right.")]
+		rtlText = 1,
+		/// \brief Use a right to left layout
+		///
+		/// The general layout is right to left.
+		[helpstring("The general layout is right to left.")]
+		rtlLayout = 2
+	} RightToLeftConstants;
+
+	/// \brief <em>Constants used with the \c TextTruncationStyle properties</em>
+	///
+	/// \sa IWindowedLabel::TextTruncationStyle, IWindowlessLabel::TextTruncationStyle
+	[helpstring("Constants used with the 'TextTruncationStyle' properties.")]
+	typedef enum TextTruncationStyleConstants {
+		/// \brief Don't draw any ellipsis
+		///
+		/// If the control's text does not fit within the control's rectangle, clip it, but don't draw any
+		/// ellipsis.
+		[helpstring("If the control's text does not fit within the control's rectangle, clip it, but don't draw any ellipsis.")]
+		ttsNoEllipsis = 0,
+		/// \brief Draw ellipsis at the text's end
+		///
+		/// If the control's text does not fit within the control's rectangle, draw ellipsis at the end of the
+		/// visible text.
+		///
+		/// \remarks The \c WindowedLabel will draw the text on a single line, if this style is used.
+		[helpstring("If the control's text does not fit within the control's rectangle, draw ellipsis at the end of the visible text.")]
+		ttsEndEllipsis = 1,
+		/// \brief Draw ellipsis at the end of each word that does not fit into the control
+		///
+		/// If the control's text does not fit within the control's rectangle, draw ellipsis at the end of any
+		/// word that does not fit into the rectangle.
+		///
+		/// \remarks The \c WindowedLabel will draw the text on a single line, if this style is used.
+		[helpstring("If the control's text does not fit within the control's rectangle, draw ellipsis at the end of any word that does not fit into the rectangle.")]
+		ttsWordEllipsis = 2,
+		/// \brief Draw ellipsis in the middle of the text
+		///
+		/// If the control's text does not fit within the control's rectangle, draw ellipsis in the middle of
+		/// the text. If the string contains backslash characters, preserve as much as possible of the text
+		/// after the last backslash.
+		///
+		/// \remarks The \c WindowedLabel will draw the text on a single line, if this style is used.
+		[helpstring("If the control's text does not fit within the control's rectangle, draw ellipsis in the middle of the text. If the string contains backslash characters, preserve as much as possible of the text after the last backslash.")]
+		ttsPathEllipsis = 3
+	} TextTruncationStyleConstants;
+
+	/// \brief <em>Constants used with the \c VAlignment property</em>
+	///
+	/// \sa IWindowlessLabel::VAlignment, HAlignmentConstants
+	[helpstring("Constants used with the 'VAlignment' property.")]
+	typedef enum VAlignmentConstants {
+		/// \brief The control's content is top-aligned
+		[helpstring("The control's content is top-aligned.")]
+		valTop,
+		/// \brief The control's content is vertically centered
+		[helpstring("The control's content is vertically centered.")]
+		valCenter,
+		/// \brief The control's content is bottom-aligned
+		[helpstring("The control's content is bottom-aligned.")]
+		valBottom
+	} VAlignmentConstants;
+
+	/// \brief <em>Constants used with the \c WordWrapping property</em>
+	///
+	/// \sa IWindowlessLabel::WordWrapping
+	[helpstring("Constants used with the 'WordWrapping' property.")]
+	typedef enum WordWrappingConstants {
+		/// \brief Only application-defined line breaks cause the control's text being wrapped onto a new line
+		///
+		/// \remarks If the \c WordWrapping property is set to \c wwManual or \c wwSingleLine, the
+		///          \c asGrowVertically auto-sizing mode causes the same behavior as the \c asGrowHorizontally
+		///          mode.
+		///
+		/// \sa IWindowlessLabel::AutoSize, AutoSizeConstants
+		[helpstring("The control's text is wrapped onto a new line only at line break characters.")]
+		wwManual,
+		/// \brief The control's text is wrapped onto multiple lines automatically
+		[helpstring("The control's text is wrapped onto a new line at line break characters and automatically if the control rectangle's edge is reached.")]
+		wwAutomatic,
+		/// \brief The control's text is displayed in a single line, ignoring line breaks
+		///
+		/// \remarks If the \c WordWrapping property is set to \c wwManual or \c wwSingleLine, the
+		///          \c asGrowVertically auto-sizing mode causes the same behavior as the \c asGrowHorizontally
+		///          mode.
+		///
+		/// \sa IWindowlessLabel::AutoSize, AutoSizeConstants
+		[helpstring("The control's text is displayed in a single line, ignoring line breaks.")]
+		wwSingleLine
+	} WordWrappingConstants;
+
+
+	/// \brief <em>Holds the coordinates of a rectangle's opposing corners</em>
+	///
+	/// \sa _IWindowedLabelEvents::OwnerDraw
+	// NOTE: If we change the UUID, we also need to update _IWindowedLabelEvents_CP.h!
+	[helpstring("Holds a rectangle's position and size."), uuid(28132270-520F-4EB0-9F95-F707F7DB2BA3)]
+	typedef struct RECTANGLE
+	{
+		/// \brief <em>Holds the position of the rectangle's left border in pixels</em>
+		[helpstring("Holds the position of the rectangle's left border in pixels.")]
+		OLE_XPOS_PIXELS Left;
+		/// \brief <em>Holds the position of the rectangle's upper border in pixels</em>
+		[helpstring("Holds the position of the rectangle's upper border in pixels.")]
+		OLE_YPOS_PIXELS Top;
+		/// \brief <em>Holds the position of the rectangle's right border in pixels</em>
+		[helpstring("Holds the position of the rectangle's right border in pixels.")]
+		OLE_XPOS_PIXELS Right;
+		/// \brief <em>Holds the position of the rectangle's lower border in pixels</em>
+		[helpstring("Holds the position of the rectangle's lower border in pixels.")]
+		OLE_YPOS_PIXELS Bottom;
+	} RECTANGLE;
+
+
+	/// \interface IOLEDataObject
+	/// \brief <em>Wraps the \c IDataObject interface</em>
+	///
+	/// This interface provides easy access to data being transferred using the \c IDataObject interface.
+	///
+	/// \sa _IOLEDataObjectEvents,
+	///     <a href="https://msdn.microsoft.com/en-us/library/ms688421.aspx">IDataObject</a>
+	[
+		object,
+		uuid(F9362B3B-9F62-4D7F-9EE3-AA6FDF9E2D19),
+		dual,
+		nonextensible,
+		helpstring("IOLEDataObject interface"),
+		pointer_default(unique)
+	]
+	interface IOLEDataObject : IDispatch
+	{
+		/// \brief <em>Deletes the contents of the \c OLEDataObject object</em>
+		///
+		/// \remarks This method will succeed only if the \c OLEDataObject wraps the control's own
+		///          implementation of the \c IDataObject interface.
+		///
+		/// \sa SetData,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms688421.aspx">IDataObject</a>
+		[id(DISPID_ODO_CLEAR), helpstring("Deletes the contents of the 'OLEDataObject' object.")]
+		HRESULT Clear(void);
+		/// \brief <em>Retrieves the best format settings from the \c OLEDataObject object</em>
+		///
+		/// Call this method to retrieve data format settings that match best with the data format, that you
+		/// actually want to work with. Set the parameters to the data format settings you want to work with.
+		/// The method will set them to the settings you should use.
+		///
+		/// \param[in,out] formatID An integer value specifying the data format. Valid values are those defined
+		///                by VB's \c ClipBoardConstants enumeration, but also any other format that was
+		///                registered using the \c RegisterClipboardFormat API function.
+		/// \param[in,out] index An integer value that is assigned to the internal \c FORMATETC struct's
+		///                \c lindex member. Usually you pass -1 here, but some formats like
+		///                \c CFSTR_FILECONTENTS require multiple \c FORMATETC structs for the same format. In
+		///                such cases you'll give each struct of this format a separate index.
+		/// \param[in,out] dataOrViewAspect An integer value that is assigned to the internal \c FORMATETC
+		///                struct's \c dwAspect member. Any of the \c DVASPECT_* values defined by the
+		///                Microsoft&reg; Windows&reg; SDK are valid. The default is \c DVASPECT_CONTENT.
+		///
+		/// \sa GetData, GetFormat,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms649049.aspx">RegisterClipboardFormat</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms682177.aspx">FORMATETC</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/bb776902.aspx#CFSTR_FILECONTENTS">CFSTR_FILECONTENTS</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms690318.aspx">DVASPECT</a>
+		[id(DISPID_ODO_GETCANONICALFORMAT), helpstring("Call this method to retrieve data format settings that match best with the data format, that you actually want to work with.")]
+		HRESULT GetCanonicalFormat([in, out] LONG* formatID, [in, out] LONG* Index, [in, out] LONG* dataOrViewAspect);
+		/// \brief <em>Retrieves data from the \c OLEDataObject object</em>
+		///
+		/// Retrieves data from the \c OLEDataObject object, that has the specified format.
+		///
+		/// \param[in] formatID An integer value specifying the format of the data to retrieve. Valid values
+		///            are those defined by VB's \c ClipBoardConstants enumeration, but also any other format
+		///            that has been registered using the \c RegisterClipboardFormat API function.
+		/// \param[in] index An integer value that is assigned to the internal \c FORMATETC struct's \c lindex
+		///            member. Usually you pass -1 here, but some formats like \c CFSTR_FILECONTENTS require
+		///            multiple \c FORMATETC structs for the same format. In such cases you'll give each struct
+		///            of this format a separate index.
+		/// \param[in] dataOrViewAspect An integer value that is assigned to the internal \c FORMATETC struct's
+		///            \c dwAspect member. Any of the \c DVASPECT_* values defined by the Microsoft&reg;
+		///            Windows&reg; SDK are valid. The default is \c DVASPECT_CONTENT.
+		///
+		/// \return The data that has the specified format.
+		///
+		/// \remarks This method will fail, if the \c OLEDataObject object does not contain data of the
+		///          specified format.
+		///
+		/// \sa GetCanonicalFormat, GetFormat, SetData,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms649049.aspx">RegisterClipboardFormat</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms682177.aspx">FORMATETC</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/bb776902.aspx#CFSTR_FILECONTENTS">CFSTR_FILECONTENTS</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms690318.aspx">DVASPECT</a>
+		[id(DISPID_ODO_GETDATA), helpstring("Retrieves data from the 'OLEDataObject' object.")]
+		HRESULT GetData([in] LONG formatID, [in, defaultvalue(-1)] LONG Index, [in, defaultvalue(1)] LONG dataOrViewAspect, [out, retval] VARIANT* pData);
+		/// \brief <em>Retrieves the \c DROPDESCRIPTION data stored by the \c OLEDataObject object</em>
+		///
+		/// Retrieves the \c DROPDESCRIPTION data stored by the \c OLEDataObject object. The drop description
+		/// describes what will happen if the user drops the dragged data at the current position. It is
+		/// displayed at the bottom of the drag image.
+		///
+		/// \param[in,out] targetDescription Receives the description of the current drop target.
+		/// \param[in,out] actionDescription Receives the description of the whole drop action, i. e. a string
+		///                like <em>"Copy to %1"</em> where <em>"Copy to"</em> is the description of the current
+		///                drop effect and <em>"%1"</em> is the placeholder for the drop target description
+		///                specified by \c targetDescription.
+		/// \param[in,out] icon Receives the icon used to visualize the current drop effect. Any of the values
+		///                defined by the \c DropDescriptionIconConstants enumeration is valid.
+		///
+		/// \remarks In the \c actionDescription string, the sign "%" is escaped as "%%".\n
+		///          Requires Windows Vista or newer.
+		///
+		/// \sa SetDropDescription, IWindowedLabel::SupportOLEDragImages,
+		///     IWindowlessLabel::SupportOLEDragImages, DropDescriptionIconConstants,
+		///     <a href="https://msdn.microsoft.com/en-us/library/bb773268.aspx">DROPDESCRIPTION</a>
+		[id(DISPID_ODO_GETDROPDESCRIPTION), helpstring("Retrieves the 'DROPDESCRIPTION' data stored by the 'OLEDataObject' object. Requires Windows Vista or newer.")]
+		HRESULT GetDropDescription([in, out, optional] VARIANT* targetDescription, [in, out, optional] VARIANT* actionDescription, [in, out, defaultvalue(0)] DropDescriptionIconConstants* Icon);
+		/// \brief <em>Retrieves whether the \c OLEDataObject object contains data in a specific format</em>
+		///
+		/// \param[in] formatID An integer value specifying the format to check for. Valid values are those
+		///            defined by VB's \c ClipBoardConstants enumeration, but also any other format that was
+		///            registered using the \c RegisterClipboardFormat API function.
+		/// \param[in] index An integer value that is assigned to the internal \c FORMATETC struct's \c lindex
+		///            member. Usually you pass -1 here, but some formats like \c CFSTR_FILECONTENTS require
+		///            multiple \c FORMATETC structs for the same format. In such cases you'll give each struct
+		///            of this format a separate index.
+		/// \param[in] dataOrViewAspect An integer value that is assigned to the internal \c FORMATETC struct's
+		///            \c dwAspect member. Any of the \c DVASPECT_* values defined by the Microsoft&reg;
+		///            Windows&reg; SDK are valid. The default is \c DVASPECT_CONTENT.
+		///
+		/// \return \c True, if the \c OLEDataObject object contains data in the specified format;
+		///         otherwise \c False.
+		///
+		/// \sa GetCanonicalFormat, GetData, SetData,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms649049.aspx">RegisterClipboardFormat</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms682177.aspx">FORMATETC</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/bb776902.aspx#CFSTR_FILECONTENTS">CFSTR_FILECONTENTS</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms690318.aspx">DVASPECT</a>
+		[id(DISPID_ODO_GETFORMAT), helpstring("Retrieves whether the 'OLEDataObject' object contains data in a specific format.")]
+		HRESULT GetFormat([in] LONG formatID, [in, defaultvalue(-1)] LONG Index, [in, defaultvalue(1)] LONG dataOrViewAspect, [out, retval] VARIANT_BOOL* pFormatAvailable);
+		/// \brief <em>Inserts data into the \c OLEDataObject object using the specified format</em>
+		///
+		/// \param[in] formatID An integer value specifying the format of the data being passed. Valid values
+		///            are those defined by VB's \c ClipBoardConstants enumeration, but also any other format
+		///            that has been registered using the \c RegisterClipboardFormat API function.
+		/// \param[in] data The data to insert. If not specified, the \c OLESetData event will be raised if
+		///            data of the specified format is requested from the \c OLEDataObject object.
+		/// \param[in] index An integer value that is assigned to the internal \c FORMATETC struct's \c lindex
+		///            member. Usually you pass -1 here, but some formats like \c CFSTR_FILECONTENTS require
+		///            multiple \c FORMATETC structs for the same format. In such cases you'll give each struct
+		///            of this format a separate index.
+		/// \param[in] dataOrViewAspect An integer value that is assigned to the internal \c FORMATETC struct's
+		///            \c dwAspect member. Any of the \c DVASPECT_* values defined by the Microsoft&reg;
+		///            Windows&reg; SDK are valid. The default is \c DVASPECT_CONTENT.
+		///
+		/// \remarks The \c data parameter is optional only if the \c OLEDataObject wraps the control's own
+		///          implementation of the \c IDataObject interface.
+		///
+		/// \sa GetData, Clear,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms649049.aspx">RegisterClipboardFormat</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms688421.aspx">IDataObject</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms682177.aspx">FORMATETC</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/bb776902.aspx#CFSTR_FILECONTENTS">CFSTR_FILECONTENTS</a>,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms690318.aspx">DVASPECT</a>
+		[id(DISPID_ODO_SETDATA), helpstring("Inserts data into the 'OLEDataObject' object using the specified format.")]
+		HRESULT SetData([in] LONG formatID, [in, optional] VARIANT data, [in, defaultvalue(-1)] LONG Index, [in, defaultvalue(1)] LONG dataOrViewAspect);
+		/// \brief <em>Sets the drop description displayed below the drag image</em>
+		///
+		/// Sets the \c DROPDESCRIPTION data. The drop description describes what will happen if the user drops
+		/// the dragged data at the current position. It is displayed at the bottom of the drag image.
+		///
+		/// \param[in] targetDescription The description of the current drop target.
+		/// \param[in] actionDescription The description of the whole drop action, i. e. a string like <em>"Copy
+		///            to %1"</em> where <em>"Copy to"</em> is the description of the current drop effect and
+		///            <em>"%1"</em> is the placeholder for the drop target description specified by
+		///            \c targetDescription.
+		/// \param[in] icon The icon used to visualize the current drop effect. Any of the values defined by
+		///            the \c DropDescriptionIconConstants enumeration is valid.
+		///
+		/// \remarks In the \c actionDescription string, the sign "%" is escaped as "%%".\n
+		///          Requires Windows Vista or newer.
+		///
+		/// \sa GetDropDescription, IWindowedLabel::SupportOLEDragImages,
+		///     IWindowlessLabel::SupportOLEDragImages, DropDescriptionIconConstants,
+		///     <a href="https://msdn.microsoft.com/en-us/library/bb773268.aspx">DROPDESCRIPTION</a>
+		[id(DISPID_ODO_SETDROPDESCRIPTION), helpstring("Sets the drop description displayed below the drag image. Requires Windows Vista or newer.")]
+		HRESULT SetDropDescription([in, optional] VARIANT targetDescription, [in, optional] VARIANT actionDescription, [in, defaultvalue(ddiNone)] DropDescriptionIconConstants Icon);
+	}
+
+
+	/// \interface _IOLEDataObjectEvents
+	/// \brief <em>The \c OLEDataObject class' events interface</em>
+	///
+	/// This interface defines all events the \c OLEDataObject class may raise.
+	///
+	/// \sa IOLEDataObject
+	[
+		uuid(08F49F29-EB94-42E4-9123-81CD10955CC2),
+		helpstring("IOLEDataObject-event-interface")
+	]
+	dispinterface _IOLEDataObjectEvents
+	{
+		properties:
+		methods:
+	};
+
+
+	/// \brief <em>The \c OLEDataObject class</em>
+	///
+	/// This COM class implements the \c IOLEDataObject and \c _IOLEDataObjectEvents interfaces.
+	///
+	/// \sa IOLEDataObject, _IOLEDataObjectEvents
+	[
+		uuid(507A1EC9-8FBE-4860-8A34-A3EF9BF771E5),
+		version(1.2),
+		noncreatable,
+		helpstring("OLEDataObject Class 1.2 (ANSI)")
+	]
+	coclass OLEDataObject
+	{
+		[default] interface IOLEDataObject;
+		[default, source] dispinterface _IOLEDataObjectEvents;
+	};
+
+
+	/// \interface IWindowedLabel
+	/// \author Timo "TimoSoft" Kunze
+	/// \brief <em>The main interface</em>
+	///
+	/// This is the label control's main interface. It wraps the control window.
+	///
+	/// \sa _IWindowedLabelEvents
+	[
+		object,
+		uuid(3A9BC1DF-9DBB-442F-A958-BA0F75EF1FE0),
+		dual,
+		nonextensible,
+		helpstring("IWindowedLabel interface"),
+		pointer_default(unique)
+	]
+	interface IWindowedLabel : IDispatch
+	{
+		/// \brief <em>Controls the style of the control's outer border</em>
+		///
+		/// Retrieves or sets the kind of border that is drawn around the control. Any of the values defined
+		/// by the \c AppearanceConstants enumeration is valid.
+		///
+		/// \sa BorderStyle, AppearanceConstants
+		[propget, id(DISPID_WLBL_APPEARANCE), helpstring("Retrieves or sets the kind of border that is drawn around the control.")]
+		HRESULT Appearance([out, retval] AppearanceConstants* pValue);
+		[propput, id(DISPID_WLBL_APPEARANCE), helpstring("Retrieves or sets the kind of border that is drawn around the control.")]
+		HRESULT Appearance([in] AppearanceConstants newValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's application ID</em>
+		///
+		///   Retrieves the control's application ID. This property is part of the fingerprint that
+		///   uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppName, AppShortName, Build, CharSet, IsRelease, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLBL_APPID), hidden]
+		HRESULT AppID([out, retval] SHORT* pValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's application name</em>
+		///
+		///   Retrieves the control's application name. This property is part of the fingerprint that
+		///   uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppShortName, Build, CharSet, IsRelease, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLBL_APPNAME), hidden]
+		HRESULT AppName([out, retval] BSTR* pValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's short application name</em>
+		///
+		///   Retrieves the control's short application name. This property is part of the fingerprint
+		///   that uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppName, Build, CharSet, IsRelease, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLBL_APPSHORTNAME), hidden]
+		HRESULT AppShortName([out, retval] BSTR* pValue);
+		/// \brief <em>Controls automatic sizing of the control</em>
+		///
+		/// Enables or disables automatic, content-dependent sizing of the control. Any of the values defined
+		/// by the \c AutoSizeConstants enumeration is valid.\n
+		/// If set to \c asGrowHorizontally or \c asGrowVertically, the control resizes itself to the ideal
+		/// size for its current content; otherwise the specified size is used. Automatic resizing is done, if
+		/// the control's text or font is changed.
+		///
+		/// \sa Text, ClipLastLine, Font, _IWindowedLabelEvents::ResizedControlWindow, AutoSizeConstants
+		[propget, id(DISPID_WLBL_AUTOSIZE), helpstring("Enables or disables automatic, content-dependent sizing of the control.")]
+		HRESULT AutoSize([out, retval] AutoSizeConstants* pValue);
+		[propput, id(DISPID_WLBL_AUTOSIZE), helpstring("Enables or disables automatic, content-dependent sizing of the control.")]
+		HRESULT AutoSize([in] AutoSizeConstants newValue);
+		/// \brief <em>Specifies the control's background color</em>
+		///
+		/// Retrieves or sets the control's background color.
+		///
+		/// \remarks This property isn't supported for themed labels.
+		///
+		/// \sa ForeColor, BackStyle
+		[propget, id(DISPID_WLBL_BACKCOLOR), helpstring("Retrieves or sets the control's background color. This property isn't supported for themed labels.")]
+		HRESULT BackColor([out, retval] OLE_COLOR* pValue);
+		[propput, id(DISPID_WLBL_BACKCOLOR), helpstring("Retrieves or sets the control's background color. This property isn't supported for themed labels.")]
+		HRESULT BackColor([in] OLE_COLOR newValue);
+		/// \brief <em>Controls drawing of the control's background</em>
+		///
+		/// Retrieves or sets how the control's background is drawn. Any of the values defined by the
+		/// \c BackStyleConstants enumeration is valid.
+		///
+		/// \sa BackColor, BackStyleConstants
+		[propget, id(DISPID_WLBL_BACKSTYLE), helpstring("Retrieves or sets how the control's background is drawn.")]
+		HRESULT BackStyle([out, retval] BackStyleConstants* pValue);
+		[propput, id(DISPID_WLBL_BACKSTYLE), helpstring("Retrieves or sets how the control's background is drawn.")]
+		HRESULT BackStyle([in] BackStyleConstants newValue);
+		/// \brief <em>Controls the style of the control's inner border</em>
+		///
+		/// Retrieves or sets the kind of inner border that is drawn around the control. Any of the values
+		/// defined by the \c BorderStyleConstants enumeration is valid.
+		///
+		/// \sa Appearance, BorderStyleConstants
+		[propget, id(DISPID_WLBL_BORDERSTYLE), helpstring("Retrieves or sets the kind of inner border that is drawn around the control.")]
+		HRESULT BorderStyle([out, retval] BorderStyleConstants* pValue);
+		[propput, id(DISPID_WLBL_BORDERSTYLE), helpstring("Retrieves or sets the kind of inner border that is drawn around the control.")]
+		HRESULT BorderStyle([in] BorderStyleConstants newValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's build number</em>
+		///
+		///   Retrieves the control's build number. This property is part of the fingerprint
+		///   that uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa Version, AppID, AppName, AppShortName, CharSet, IsRelease, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLBL_BUILD), hidden]
+		HRESULT Build([out, retval] LONG* pValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's character set</em>
+		///
+		///   Retrieves the control's character set (Unicode or ANSI). This property is part of the
+		///   fingerprint that uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppName, AppShortName, Build, IsRelease, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLBL_CHARSET), hidden]
+		HRESULT CharSet([out, retval] BSTR* pValue);
+		/// \brief <em>Specifies whether the control may display a partially visible last line</em>
+		///
+		/// Retrieves or sets whether the last line of text is drawn if it is only partially visible. If set to
+		/// \c True, only fully visible lines of text are drawn; otherwise the last drawn line of text may be
+		/// clipped and only partially visible. Also, if set to \c True, the text will be drawn like in an edit
+		/// control.
+		///
+		/// \remarks Current versions of Windows do not seem to support this feature.
+		///
+		/// \sa Text, AutoSize
+		[propget, id(DISPID_WLBL_CLIPLASTLINE), helpstring("Retrieves or sets whether the last line of text is drawn if it is only partially visible. Current versions of Windows do not seem to support this feature.")]
+		HRESULT ClipLastLine([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLBL_CLIPLASTLINE), helpstring("Retrieves or sets whether the last line of text is drawn if it is only partially visible. Current versions of Windows do not seem to support this feature.")]
+		HRESULT ClipLastLine([in] VARIANT_BOOL newValue);
+		/// \brief <em>Controls which events are fired</em>
+		///
+		/// Retrieves or sets the events that won't be fired. Disabling events increases performance.
+		/// Any combination of the values defined by the \c DisabledEventsConstants enumeration is valid.
+		///
+		/// \sa DisabledEventsConstants
+		[propget, id(DISPID_WLBL_DISABLEDEVENTS), helpstring("Retrieves or sets the events that won't be fired. Disabling events increases performance."), nonbrowsable]
+		HRESULT DisabledEvents([out, retval] DisabledEventsConstants* pValue);
+		[propput, id(DISPID_WLBL_DISABLEDEVENTS), helpstring("Retrieves or sets the events that won't be fired. Disabling events increases performance."), nonbrowsable]
+		HRESULT DisabledEvents([in] DisabledEventsConstants newValue);
+		/// \brief <em>Controls redrawing of the control</em>
+		///
+		/// Enables or disables automatic redrawing of the control. Disabling redraw while doing large changes
+		/// on the control may increase performance. If set to \c False, the control will redraw itself
+		/// automatically; otherwise not.
+		[propget, id(DISPID_WLBL_DONTREDRAW), helpstring("Enables or disables automatic redrawing of the control.")]
+		HRESULT DontRedraw([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLBL_DONTREDRAW), helpstring("Enables or disables automatic redrawing of the control.")]
+		HRESULT DontRedraw([in] VARIANT_BOOL newValue);
+		/// \brief <em>Controls whether the control accepts user input</em>
+		///
+		/// Enables or disables the control for user input. If set to \c True, it reacts to user input;
+		/// otherwise not.
+		[propget, id(DISPID_WLBL_ENABLED), helpstring("Enables or disables the control for user input.")]
+		HRESULT Enabled([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLBL_ENABLED), helpstring("Enables or disables the control for user input.")]
+		HRESULT Enabled([in] VARIANT_BOOL newValue);
+		/// \brief <em>Specifies the control's font</em>
+		///
+		/// Retrieves or sets the control's font. It's used to draw the control's content.
+		///
+		/// \sa UseSystemFont, ForeColor
+		[propget, id(DISPID_WLBL_FONT), helpstring("Retrieves or sets the control's font.")]
+		HRESULT Font([out, retval] IFontDisp** ppFont);
+		[propput, id(DISPID_WLBL_FONT), helpstring("Retrieves or sets the control's font.")]
+		HRESULT Font([in] IFontDisp* pNewFont);
+		[propputref, id(DISPID_WLBL_FONT), helpstring("Retrieves or sets the control's font.")]
+		HRESULT Font([in] IFontDisp* pNewFont);
+		/// \brief <em>Specifies the control's text color</em>
+		///
+		/// Retrieves or sets the control's text color.
+		///
+		/// \sa BackColor
+		[propget, id(DISPID_WLBL_FORECOLOR), helpstring("Retrieves or sets the control's text color.")]
+		HRESULT ForeColor([out, retval] OLE_COLOR* pValue);
+		[propput, id(DISPID_WLBL_FORECOLOR), helpstring("Retrieves or sets the control's text color.")]
+		HRESULT ForeColor([in] OLE_COLOR newValue);
+		/// \brief <em>Controls the horizontal alignment of the control's content</em>
+		///
+		/// Retrieves or sets the horizontal alignment of the control's content. Any of the values defined by
+		/// the \c HAlignmentConstants enumeration is valid.
+		///
+		/// \sa Text, HAlignmentConstants
+		[propget, id(DISPID_WLBL_HALIGNMENT), helpstring("Retrieves or sets the horizontal alignment of the control's content.")]
+		HRESULT HAlignment([out, retval] HAlignmentConstants* pValue);
+		[propput, id(DISPID_WLBL_HALIGNMENT), helpstring("Retrieves or sets the horizontal alignment of the control's content.")]
+		HRESULT HAlignment([in] HAlignmentConstants newValue);
+		/// \brief <em>Controls when the \c MouseHover event is fired</em>
+		///
+		/// Retrieves or sets the number of milliseconds the mouse cursor must be located over the
+		/// control's client area before the \c MouseHover event is fired. If set to -1, the system hover
+		/// time is used.
+		///
+		/// \sa _IWindowedLabelEvents::MouseHover
+		[propget, id(DISPID_WLBL_HOVERTIME), helpstring("Retrieves or sets the number of milliseconds the mouse cursor must be located over the control's client area before the 'MouseHover' event is fired.")]
+		HRESULT HoverTime([out, retval] LONG* pValue);
+		[propput, id(DISPID_WLBL_HOVERTIME), helpstring("Retrieves or sets the number of milliseconds the mouse cursor must be located over the control's client area before the 'MouseHover' event is fired.")]
+		HRESULT HoverTime([in] LONG newValue);
+		/// \brief <em>Retrieves the control's window handle</em>
+		///
+		/// Retrieves the control's window handle.
+		///
+		/// \remarks This property is read-only.
+		///
+		/// \sa _IWindowedLabelEvents::RecreatedControlWindow, _IWindowedLabelEvents::DestroyedControlWindow
+		[propget, id(DISPID_WLBL_HWND), helpstring("Retrieves the control's window handle."), nonbrowsable]
+		HRESULT hWnd([out, retval] OLE_HANDLE* pValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's release type</em>
+		///
+		///   Retrieves the control's release type. This property is part of the fingerprint
+		///   that uniquely identifies each software written by Timo "TimoSoft" Kunze. If set to
+		///   \c True, the control was compiled for release; otherwise it was compiled for debugging.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppName, AppShortName, Build, CharSet, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLBL_ISRELEASE), hidden]
+		HRESULT IsRelease([out, retval] VARIANT_BOOL* pValue);
+		/// \brief <em>Controls the control's mouse cursor</em>
+		///
+		/// Retrieves or sets a user-defined mouse cursor. It's used if \c MousePointer is set to
+		/// \c mpCustom.
+		///
+		/// \sa MousePointer, MousePointerConstants
+		[propget, id(DISPID_WLBL_MOUSEICON), helpstring("Retrieves or sets a user-defined mouse cursor.")]
+		HRESULT MouseIcon([out, retval] IPictureDisp** ppMouseIcon);
+		[propput, id(DISPID_WLBL_MOUSEICON), helpstring("Retrieves or sets a user-defined mouse cursor.")]
+		HRESULT MouseIcon([in] IPictureDisp* pNewMouseIcon);
+		[propputref, id(DISPID_WLBL_MOUSEICON), helpstring("Retrieves or sets a user-defined mouse cursor.")]
+		HRESULT MouseIcon([in] IPictureDisp* pNewMouseIcon);
+		/// \brief <em>Controls the control's mouse cursor</em>
+		///
+		/// Retrieves or sets the cursor's type that's used if the mouse cursor is placed within the
+		/// control's client area. Any of the values defined by the \c MousePointerConstants enumeration
+		/// is valid.
+		///
+		/// \sa MouseIcon, MousePointerConstants
+		[propget, id(DISPID_WLBL_MOUSEPOINTER), helpstring("Retrieves or sets the cursor's type that's used if the mouse cursor is placed within the control's client area.")]
+		HRESULT MousePointer([out, retval] MousePointerConstants* pValue);
+		[propput, id(DISPID_WLBL_MOUSEPOINTER), helpstring("Retrieves or sets the cursor's type that's used if the mouse cursor is placed within the control's client area.")]
+		HRESULT MousePointer([in] MousePointerConstants newValue);
+		/// \brief <em>Specifies whether the control is drawn by the application instead of the control</em>
+		///
+		/// Retrieves or sets whether your application draws the control itself. If set to \c True, the control
+		/// will fire the \c OwnerDraw event each time it must be drawn. If set to \c False, the control will
+		/// draw itself.
+		///
+		/// \sa _IWindowedLabelEvents::OwnerDraw
+		[propget, id(DISPID_WLBL_OWNERDRAWN), helpstring("Retrieves or sets whether your application draws the control itself.")]
+		HRESULT OwnerDrawn([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLBL_OWNERDRAWN), helpstring("Retrieves or sets whether your application draws the control itself.")]
+		HRESULT OwnerDrawn([in] VARIANT_BOOL newValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the name(s) of the control's programmer(s)</em>
+		///
+		///   Retrieves the name(s) of the control's programmer(s). This property is part of the
+		///   fingerprint that uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppName, AppShortName, Build, CharSet, IsRelease, Tester
+		/// \endif
+		[propget, id(DISPID_WLBL_PROGRAMMER), hidden]
+		HRESULT Programmer([out, retval] BSTR* pValue);
+		/// \brief <em>Controls the control's behavior in drag'n'drop operations</em>
+		///
+		/// Retrieves or sets whether the control is registered as a target for OLE drag'n'drop. If set to
+		/// \c True, the control accepts OLE drag'n'drop actions; otherwise not.
+		///
+		/// \sa SupportOLEDragImages, _IWindowedLabelEvents::OLEDragEnter
+		[propget, id(DISPID_WLBL_REGISTERFOROLEDRAGDROP), helpstring("Retrieves or sets whether the control is registered as a target for OLE drag'n'drop.")]
+		HRESULT RegisterForOLEDragDrop([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLBL_REGISTERFOROLEDRAGDROP), helpstring("Retrieves or sets whether the control is registered as a target for OLE drag'n'drop.")]
+		HRESULT RegisterForOLEDragDrop([in] VARIANT_BOOL newValue);
+		/// \brief <em>Controls the control's right-to-left features</em>
+		///
+		/// Enables or disables bidirectional features. Any combination of the values defined by the
+		/// \c RightToLeftConstants enumeration is valid.
+		///
+		/// \sa RightToLeftConstants
+		[propget, id(DISPID_WLBL_RIGHTTOLEFT), helpstring("Enables or disables bidirectional features.")]
+		HRESULT RightToLeft([out, retval] RightToLeftConstants* pValue);
+		[propput, id(DISPID_WLBL_RIGHTTOLEFT), helpstring("Enables or disables bidirectional features.")]
+		HRESULT RightToLeft([in] RightToLeftConstants newValue);
+		/// \brief <em>Controls the control's behavior in drag'n'drop operations</em>
+		///
+		/// Retrieves or sets whether the control creates an \c IDropTargetHelper object, so that a drag image
+		/// can be displayed during OLE drag'n'drop. If set to \c True, the control creates the object;
+		/// otherwise not.
+		///
+		/// \remarks Requires shell32.dll version 5.0 or higher.
+		///
+		/// \sa RegisterForOLEDragDrop, FinishOLEDragDrop,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms646238.aspx">IDropTargetHelper</a>
+		[propget, id(DISPID_WLBL_SUPPORTOLEDRAGIMAGES), helpstring("Retrieves or sets whether the control creates an 'IDropTargetHelper' object, so that a drag image can be displayed during OLE drag'n'drop. Requires shell32.dll version 5.0 or higher.")]
+		HRESULT SupportOLEDragImages([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLBL_SUPPORTOLEDRAGIMAGES), helpstring("Retrieves or sets whether the control creates an 'IDropTargetHelper' object, so that a drag image can be displayed during OLE drag'n'drop. Requires shell32.dll version 5.0 or higher.")]
+		HRESULT SupportOLEDragImages([in] VARIANT_BOOL newValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the name(s) of the control's tester(s)</em>
+		///
+		///   Retrieves the name(s) of the control's tester(s). This property is part of the
+		///   fingerprint that uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppName, AppShortName, Build, CharSet, IsRelease, Programmer
+		/// \endif
+		[propget, id(DISPID_WLBL_TESTER), hidden]
+		HRESULT Tester([out, retval] BSTR* pValue);
+		/// \brief <em>Specifies the control's content</em>
+		///
+		/// Retrieves or sets the control's content.
+		///
+		/// \remarks This is the control's default property.
+		///
+		/// \sa ClipLastLine, TextTruncationStyleConstants, ForeColor, Font, HAlignment, UseMnemonic, AutoSize,
+		///     _IWindowedLabelEvents::TextChanged
+		[propget, id(DISPID_WLBL_TEXT), helpstring("Retrieves or sets the control's content."), bindable, displaybind, requestedit, defaultbind]
+		HRESULT Text([out, retval] BSTR* pValue);
+		[propput, id(DISPID_WLBL_TEXT), helpstring("Retrieves or sets the control's content."), bindable, displaybind, requestedit, defaultbind]
+		HRESULT Text([in] BSTR newValue);
+		/// \brief <em>Controls truncation of the control's text if it is too long</em>
+		///
+		/// Retrieves or sets where ellipsis are inserted into the string to visualize that the control's text
+		/// is longer than the control can display. Any of the values defined by the
+		/// \c TextTruncationStyleConstants enumeration is valid.
+		///
+		/// \sa Text, TextTruncationStyleConstants
+		[propget, id(DISPID_WLBL_TEXTTRUNCATIONSTYLE), helpstring("Retrieves or sets where ellipsis are inserted into the string to visualize that the control's text is longer than the control can display.")]
+		HRESULT TextTruncationStyle([out, retval] TextTruncationStyleConstants* pValue);
+		[propput, id(DISPID_WLBL_TEXTTRUNCATIONSTYLE), helpstring("Retrieves or sets where ellipsis are inserted into the string to visualize that the control's text is longer than the control can display.")]
+		HRESULT TextTruncationStyle([in] TextTruncationStyleConstants newValue);
+		/// \brief <em>Specifies how ampersands in the control text are handled</em>
+		///
+		/// Retrieves or sets whether the control handles the last ampersand in the control text as accelerator
+		/// key and hides any other ampersands, except if they are escaped by doubling them, i.e. the text
+		/// contains &quot;&amp;&amp;&quot; instead of &quot;&amp;&quot;. If set to \c True, ampersands are
+		/// handled as marking the accelerator key; otherwise they are handled as normal characters.
+		///
+		/// \sa Text
+		[propget, id(DISPID_WLBL_USEMNEMONIC), helpstring("Retrieves or sets whether the control handles the last ampersand in the control text as accelerator key and hides any other ampersands, except if they are escaped by doubling them, i.e. the text contains '&&' instead of '&'.")]
+		HRESULT UseMnemonic([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLBL_USEMNEMONIC), helpstring("Retrieves or sets whether the control handles the last ampersand in the control text as accelerator key and hides any other ampersands, except if they are escaped by doubling them, i.e. the text contains '&&' instead of '&'.")]
+		HRESULT UseMnemonic([in] VARIANT_BOOL newValue);
+		/// \brief <em>Specifies whether the control uses the system font</em>
+		///
+		/// Retrieves or sets whether the control uses the MS Shell Dlg font (which is mapped to the system's
+		/// default GUI font) or the font specified by the \c Font property. If set to \c True, the system
+		/// font; otherwise the specified font is used.
+		///
+		/// \sa Font
+		[propget, id(DISPID_WLBL_USESYSTEMFONT), helpstring("Retrieves or sets whether the control uses the MS Shell Dlg font or the font specified by the 'Font' property.")]
+		HRESULT UseSystemFont([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLBL_USESYSTEMFONT), helpstring("Retrieves or sets whether the control uses the MS Shell Dlg font or the font specified by the 'Font' property.")]
+		HRESULT UseSystemFont([in] VARIANT_BOOL newValue);
+		/// \brief <em>Retrieves the control's version</em>
+		///
+		/// \remarks This property is read-only.
+		[propget, id(DISPID_WLBL_VERSION), helpstring("Retrieves the control's version."), nonbrowsable]
+		HRESULT Version([out, retval] BSTR* pValue);
+
+		/// \brief <em>Displays the control's credits</em>
+		///
+		/// Displays some information about this control and its author.
+		[id(DISPID_WLBL_ABOUT), helpstring("Displays some information about this control and its author.")]
+		HRESULT About(void);
+		/// \brief <em>Loads the control's settings from the specified file</em>
+		///
+		/// \param[in] file The file to read from.
+		///
+		/// \return \c True if the settings could be loaded; otherwise \c False.
+		///
+		/// \sa SaveSettingsToFile
+		[id(DISPID_WLBL_LOADSETTINGSFROMFILE), helpstring("Loads the control's settings from the specified file.")]
+		HRESULT LoadSettingsFromFile([in] BSTR file, [out, retval] VARIANT_BOOL* pSucceeded);
+		/// \brief <em>Advises the control to redraw itself</em>
+		[id(DISPID_WLBL_REFRESH), helpstring("Advises the control to redraw itself.")]
+		HRESULT Refresh(void);
+		/// \brief <em>Saves the control's settings to the specified file</em>
+		///
+		/// \param[in] file The file to write to.
+		///
+		/// \return \c True if the settings could be saved; otherwise \c False.
+		///
+		/// \sa LoadSettingsFromFile
+		[id(DISPID_WLBL_SAVESETTINGSTOFILE), helpstring("Saves the control's settings to the specified file.")]
+		HRESULT SaveSettingsToFile([in] BSTR file, [out, retval] VARIANT_BOOL* pSucceeded);
+
+		/// \brief <em>Finishes a pending drop operation</em>
+		///
+		/// During a drag'n'drop operation the drag image is displayed until the \c OLEDragDrop event has been
+		/// handled. This order is intended by Microsoft Windows. However, if a message box is displayed from
+		/// within the \c OLEDragDrop event, or the drop operation cannot be performed asynchronously and takes
+		/// a long time, it may be desirable to remove the drag image earlier.\n
+		/// This method will break the intended order and finish the drag'n'drop operation (including removal
+		/// of the drag image) immediately.
+		///
+		/// \remarks This method will fail if not called from the \c OLEDragDrop event handler or if no drag
+		///          images are used.
+		///
+		/// \sa _IWindowedLabelEvents::OLEDragDrop, SupportOLEDragImages
+		[id(DISPID_WLBL_FINISHOLEDRAGDROP), helpstring("Finishes a pending drop operation from within the 'OLEDragDrop' event, removing the drag image, but breaking the intended order. See documentation for details.")]
+		HRESULT FinishOLEDragDrop(void);
+	};
+
+
+	/// \interface _IWindowedLabelEvents
+	/// \author Timo "TimoSoft" Kunze
+	/// \brief <em>The \c WindowedLabel class' events interface</em>
+	///
+	/// This interface defines all events the \c WindowedLabel class may raise.
+	///
+	/// \sa IWindowedLabel
+	[
+		uuid(48ED6C2A-A921-485E-8BF1-3A1E2C9D34E9),
+		helpstring("IWindowedLabel-event-interface")
+	]
+	dispinterface _IWindowedLabelEvents
+	{
+		properties:
+		methods:
+			/// \brief <em>The control's text has changed</em>
+			///
+			/// Will be fired after the control's content has changed.
+			///
+			/// \remarks This is the control's default event.\n
+			///          This event may be disabled.
+			///
+			/// \sa IWindowedLabel::Text
+			[id(DISPID_WLBLE_TEXTCHANGED), helpstring("Will be fired after the control's content has changed. This event may be disabled.")]
+			void TextChanged(void);
+			/// \brief <em>The user clicked into the control's client area</em>
+			///
+			/// Will be fired if the user clicks into the control's client area using the left mouse button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the click. This should always
+			///            be \c vbLeftButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the click.
+			///            Any combination of the values defined by VB's \c ShiftConstants enumeration is
+			///            valid.
+			/// \param[in] x The x-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa DblClick, MClick, RClick, XClick, IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_CLICK), helpstring("Will be fired if the user clicks into the control's client area using the left mouse button. This event may be disabled.")]
+			void Click(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The context menu should be displayed</em>
+			///
+			/// Will be fired if the control's context menu should be displayed.
+			///
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the menu's proposed position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the menu's proposed position relative to the
+			///            control's upper-left corner.
+			///
+			/// \sa RClick
+			[id(DISPID_WLBLE_CONTEXTMENU), helpstring("Will be fired if the control's context menu should be displayed.")]
+			void ContextMenu(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The user double-clicked into the control's client area</em>
+			///
+			/// Will be fired if the user double-clicks into the control's client area using the left mouse
+			/// button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the double-click. This should
+			///            always be \c vbLeftButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the
+			///            double-click. Any combination of the values defined by VB's \c ShiftConstants
+			///            enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa Click, MDblClick, RDblClick, XDblClick, IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_DBLCLICK), helpstring("Will be fired if the user double-clicks into the control's client area using the left mouse button. This event may be disabled.")]
+			void DblClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The control window was destroyed</em>
+			///
+			/// Will be fired after the control window was destroyed.
+			///
+			/// \param[in] hWnd The control's window handle.
+			///
+			/// \sa RecreatedControlWindow, IWindowedLabel::hWnd
+			[id(DISPID_WLBLE_DESTROYEDCONTROLWINDOW), helpstring("Will be fired after the control window was destroyed.")]
+			void DestroyedControlWindow(LONG hWnd);
+			/// \brief <em>The user clicked into the control's client area</em>
+			///
+			/// Will be fired if the user clicks into the control's client area using the middle mouse button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the click. This should always
+			///            be \c vbMiddleButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the click.
+			///            Any combination of the values defined by VB's \c ShiftConstants enumeration is
+			///            valid.
+			/// \param[in] x The x-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MDblClick, Click, RClick, XClick, IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_MCLICK), helpstring("Will be fired if the user clicks into the control's client area using the middle mouse button. This event may be disabled.")]
+			void MClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The user double-clicked into the control's client area</em>
+			///
+			/// Will be fired if the user double-clicks into the control's client area using the middle mouse
+			/// button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the double-click. This should
+			///            always be \c vbMiddleButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the
+			///            double-click. Any combination of the values defined by VB's \c ShiftConstants
+			///            enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MClick, DblClick, RDblClick, XDblClick, IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_MDBLCLICK), helpstring("Will be fired if the user double-clicks into the control's client area using the middle mouse button. This event may be disabled.")]
+			void MDblClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>A mouse button was pressed over the control's client area</em>
+			///
+			/// Will be fired if the user presses a mouse button while the mouse cursor is located over the
+			/// control's client area.
+			///
+			/// \param[in] button The pressed mouse button. Any of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseUp, Click, MClick, RClick, XClick, ExtendedMouseButtonConstants,
+			///     IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_MOUSEDOWN), helpstring("Will be fired if the user presses a mouse button while the mouse cursor is located over the control's client area. This event may be disabled.")]
+			void MouseDown(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The mouse cursor was moved into the control's client area</em>
+			///
+			/// Will be fired if the user moved the mouse cursor into the control's client area.
+			///
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseLeave, MouseHover, MouseMove, ExtendedMouseButtonConstants,
+			///     IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_MOUSEENTER), helpstring("Will be fired if the user moved the mouse cursor into the control's client area. This event may be disabled.")]
+			void MouseEnter(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The mouse cursor was moved into the control's client area a specified period of time before</em>
+			///
+			/// Will be fired if the mouse cursor has been located over the control's client area for the number
+			/// of milliseconds specified by the \c IWindowedLabel::HoverTime property.
+			///
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseEnter, MouseLeave, MouseMove, IWindowedLabel::HoverTime, ExtendedMouseButtonConstants,
+			///     IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_MOUSEHOVER), helpstring("Will be fired if the mouse cursor has been located over the control's client area for the number of milliseconds specified by the 'HoverTime' property. This event may be disabled.")]
+			void MouseHover(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The mouse cursor was moved out of the control's client area</em>
+			///
+			/// Will be fired if the user moves the mouse cursor out of the control's client area.
+			///
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseEnter, MouseHover, MouseMove, ExtendedMouseButtonConstants,
+			///     IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_MOUSELEAVE), helpstring("Will be fired if the user moves the mouse cursor out of the control's client area. This event may be disabled.")]
+			void MouseLeave(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The mouse cursor was moved over the control's client area</em>
+			///
+			/// Will be fired if the user moves the mouse cursor over the control's client area.
+			///
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseEnter, MouseLeave, MouseDown, MouseUp, ExtendedMouseButtonConstants,
+			///     IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_MOUSEMOVE), helpstring("Will be fired if the user moves the mouse cursor over the control's client area. This event may be disabled.")]
+			void MouseMove(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>A mouse button was released over the control's client area</em>
+			///
+			/// Will be fired if the user releases a mouse button while the mouse cursor is located over the
+			/// control's client area.
+			///
+			/// \param[in] button The released mouse button. Any of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseDown, Click, MClick, RClick, XClick, ExtendedMouseButtonConstants,
+			///     IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_MOUSEUP), helpstring("Will be fired if the user releases a mouse button while the mouse cursor is located over the control's client area. This event may be disabled.")]
+			void MouseUp(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The data was dropped onto the control during OLE drag'n'drop</em>
+			///
+			/// Will be fired during OLE drag'n'drop if the user completes the operation while the mouse cursor
+			/// is located over the control's client area.
+			///
+			/// \param[in] data The dropped data.
+			/// \param[in,out] effect On entry, a bit field of the drop effects (defined by the
+			///                \c OLEDropEffectConstants enumeration) supported by the drag source. On return,
+			///                this paramter must be set to the drop effect that the target finally executed.
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks Don't forget to release any references that you hold to the data object.
+			///
+			/// \sa OLEDragEnter, OLEDragMouseMove, OLEDragLeave, MouseUp,
+			///     IWindowedLabel::RegisterForOLEDragDrop, IWindowedLabel::FinishOLEDragDrop,
+			///     OLEDropEffectConstants
+			[id(DISPID_WLBLE_OLEDRAGDROP), helpstring("Will be fired during OLE drag'n'drop if the user completes the operation while the mouse cursor is located over the control's client area.")]
+			void OLEDragDrop(IOLEDataObject* data, OLEDropEffectConstants* effect, SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The data was dragged into the control during OLE drag'n'drop</em>
+			///
+			/// Will be fired during OLE drag'n'drop if the user moved the mouse cursor into the control's
+			/// client area.
+			///
+			/// \param[in] data The dragged data.
+			/// \param[in,out] effect On entry, a bit field of the drop effects (defined by the
+			///                \c OLEDropEffectConstants enumeration) supported by the drag source. On return,
+			///                this paramter must be set to the drop effect that the target wants to be used on
+			///                drop.
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \sa OLEDragMouseMove, OLEDragLeave, OLEDragDrop, MouseEnter,
+			///     IWindowedLabel::RegisterForOLEDragDrop, OLEDropEffectConstants
+			[id(DISPID_WLBLE_OLEDRAGENTER), helpstring("Will be fired during OLE drag'n'drop if the user moved the mouse cursor into the control's client area.")]
+			void OLEDragEnter(IOLEDataObject* data, OLEDropEffectConstants* effect, SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The data was dragged out of the control during OLE drag'n'drop</em>
+			///
+			/// Will be fired during OLE drag'n'drop if the user moves the mouse cursor out of the control's
+			/// client area or if the user canceled the drag'n'drop operation.
+			///
+			/// \param[in] data The dragged data.
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks Don't forget to release any references that you hold to the data object.
+			///
+			/// \sa OLEDragEnter, OLEDragMouseMove, OLEDragDrop, MouseLeave,
+			///     IWindowedLabel::RegisterForOLEDragDrop
+			[id(DISPID_WLBLE_OLEDRAGLEAVE), helpstring("Will be fired during OLE drag'n'drop if the user moves the mouse cursor over the control's client area or if the user canceled the drag'n'drop operation.")]
+			void OLEDragLeave(IOLEDataObject* data, SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The data was dragged over the control during OLE drag'n'drop</em>
+			///
+			/// Will be fired during OLE drag'n'drop if the user moves the mouse cursor over the control's
+			/// client area.
+			///
+			/// \param[in] data The dragged data.
+			/// \param[in,out] effect On entry, a bit field of the drop effects (defined by the
+			///                \c OLEDropEffectConstants enumeration) supported by the drag source. On return,
+			///                this paramter must be set to the drop effect that the target wants to be used on
+			///                drop.
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \sa OLEDragEnter, OLEDragLeave, OLEDragDrop, MouseMove, IWindowedLabel::RegisterForOLEDragDrop,
+			///     OLEDropEffectConstants
+			[id(DISPID_WLBLE_OLEDRAGMOUSEMOVE), helpstring("Will be fired during OLE drag'n'drop if the user moves the mouse cursor over the control's client area.")]
+			void OLEDragMouseMove(IOLEDataObject* data, OLEDropEffectConstants* effect, SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The control is owner-drawn and needs to be drawn</em>
+			///
+			/// Will be fired if the \c OwnerDrawn property is set to \c True and the control needs to be drawn.
+			///
+			/// \param[in] requiredAction Specifies the required drawing action. Any combination of the values
+			///            defined by the \c OwnerDrawActionConstants enumeration is valid.
+			/// \param[in] controlState Specifies the control's current state (focused, selected etc.). Any
+			///            combination of the values defined by the \c OwnerDrawControlStateConstants enumeration
+			///            are valid.
+			/// \param[in] hDC The handle of the device context in which all drawing should take place.
+			/// \param[in] drawingRectangle The bounding rectangle of the area that must be drawn.
+			///
+			/// \sa IWindowedLabel::OwnerDrawn, RECTANGLE, OwnerDrawActionConstants,
+			///     OwnerDrawControlStateConstants
+			[id(DISPID_WLBLE_OWNERDRAW), helpstring("Will be fired if the 'OwnerDrawn' property is set to 'True' and the control needs to be drawn.")]
+			void OwnerDraw(OwnerDrawActionConstants requiredAction, OwnerDrawControlStateConstants controlState, LONG hDC, RECTANGLE* drawingRectangle);
+			/// \brief <em>The user clicked into the control's client area</em>
+			///
+			/// Will be fired if the user clicks into the control's client area using the right mouse button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the click. This should always
+			///            be \c vbRightButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the click.
+			///            Any combination of the values defined by VB's \c ShiftConstants enumeration is
+			///            valid.
+			/// \param[in] x The x-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa ContextMenu, RDblClick, Click, MClick, XClick, IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_RCLICK), helpstring("Will be fired if the user clicks into the control's client area using the right mouse button. This event may be disabled.")]
+			void RClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The user double-clicked into the control's client area</em>
+			///
+			/// Will be fired if the user double-clicks into the control's client area using the right mouse
+			/// button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the double-click. This should
+			///            always be \c vbRightButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the
+			///            double-click. Any combination of the values defined by VB's \c ShiftConstants
+			///            enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa RClick, DblClick, MDblClick, XDblClick, IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_RDBLCLICK), helpstring("Will be fired if the user double-clicks into the control's client area using the right mouse button. This event may be disabled.")]
+			void RDblClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The control window was recreated</em>
+			///
+			/// Will be fired after the control window was destroyed and recreated.\n
+			/// Some properties can't be changed after the control window was created. If such a property is
+			/// changed and the control window already exists, it is destroyed and recreated.
+			///
+			/// \param[in] hWnd The control's window handle.
+			///
+			/// \sa DestroyedControlWindow, IWindowedLabel::hWnd
+			[id(DISPID_WLBLE_RECREATEDCONTROLWINDOW), helpstring("Will be fired after the control window was destroyed and recreated.")]
+			void RecreatedControlWindow(LONG hWnd);
+			/// \brief <em>The control window was resized</em>
+			///
+			/// Will be fired after the control window was resized.
+			///
+			/// \sa IWindowedLabel::AutoSize
+			[id(DISPID_WLBLE_RESIZEDCONTROLWINDOW), helpstring("Will be fired after the control window was resized.")]
+			void ResizedControlWindow(void);
+			/// \brief <em>The user clicked into the control's client area</em>
+			///
+			/// Will be fired if the user clicks into the control's client area using one of the extended mouse
+			/// buttons.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the click. This should always
+			///            be a constant defined by the \c ExtendedMouseButtonConstants enumeration.
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the click.
+			///            Any combination of the values defined by VB's \c ShiftConstants enumeration is
+			///            valid.
+			/// \param[in] x The x-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa XDblClick, Click, MClick, RClick, IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_XCLICK), helpstring("Will be fired if the user clicks into the control's client area using one of the extended mouse buttons. This event may be disabled.")]
+			void XClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The user double-clicked into the control's client area</em>
+			///
+			/// Will be fired if the user double-clicks into the control's client area using one of the extended
+			/// mouse buttons.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the double-click. This should
+			///            be a constant defined by the \c ExtendedMouseButtonConstants enumeration.
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the
+			///            double-click. Any combination of the values defined by VB's \c ShiftConstants
+			///            enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa XClick, DblClick, MDblClick, RDblClick, IWindowedLabel::DisabledEvents
+			[id(DISPID_WLBLE_XDBLCLICK), helpstring("Will be fired if the user double-clicks into the control's client area using one of the extended mouse buttons. This event may be disabled.")]
+			void XDblClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+	};
+
+
+	/// \author Timo "TimoSoft" Kunze
+	/// \brief <em>The \c WindowedLabel class</em>
+	///
+	/// The control's main COM class. It implements the \c IWindowedLabel and
+	/// \c _IWindowedLabelEvents interfaces.
+	///
+	/// \sa IWindowedLabel, _IWindowedLabelEvents
+	[
+		uuid(CD10F2D4-A4F4-4D7A-BF7F-22C966801AAA),
+		version(1.2),
+		helpstring("WindowedLabel Control 1.2 (ANSI)")
+	]
+	coclass WindowedLabel
+	{
+		[default] interface IWindowedLabel;
+		[default, source] dispinterface _IWindowedLabelEvents;
+	};
+
+
+	/// \interface IWindowlessLabel
+	/// \author Timo "TimoSoft" Kunze
+	/// \brief <em>The main interface</em>
+	///
+	/// This is the label control's main interface. It wraps the control window.
+	///
+	/// \sa _IWindowlessLabelEvents
+	[
+		object,
+		uuid(8B218E69-AEAD-499E-8706-506809D31599),
+		dual,
+		nonextensible,
+		helpstring("IWindowlessLabel interface"),
+		pointer_default(unique)
+	]
+	interface IWindowlessLabel : IDispatch
+	{
+		/// \brief <em>Controls the style of the control's outer border</em>
+		///
+		/// Retrieves or sets the kind of border that is drawn around the control. Any of the values defined
+		/// by the \c AppearanceConstants enumeration is valid.
+		///
+		/// \sa BorderStyle, AppearanceConstants
+		[propget, id(DISPID_WLLBL_APPEARANCE), helpstring("Retrieves or sets the kind of border that is drawn around the control.")]
+		HRESULT Appearance([out, retval] AppearanceConstants* pValue);
+		[propput, id(DISPID_WLLBL_APPEARANCE), helpstring("Retrieves or sets the kind of border that is drawn around the control.")]
+		HRESULT Appearance([in] AppearanceConstants newValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's application ID</em>
+		///
+		///   Retrieves the control's application ID. This property is part of the fingerprint that
+		///   uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppName, AppShortName, Build, CharSet, IsRelease, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLLBL_APPID), hidden]
+		HRESULT AppID([out, retval] SHORT* pValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's application name</em>
+		///
+		///   Retrieves the control's application name. This property is part of the fingerprint that
+		///   uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppShortName, Build, CharSet, IsRelease, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLLBL_APPNAME), hidden]
+		HRESULT AppName([out, retval] BSTR* pValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's short application name</em>
+		///
+		///   Retrieves the control's short application name. This property is part of the fingerprint
+		///   that uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppName, Build, CharSet, IsRelease, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLLBL_APPSHORTNAME), hidden]
+		HRESULT AppShortName([out, retval] BSTR* pValue);
+		/// \brief <em>Controls automatic sizing of the control</em>
+		///
+		/// Enables or disables automatic, content-dependent sizing of the control. Any of the values defined
+		/// by the \c AutoSizeConstants enumeration is valid.\n
+		/// If set to \c asGrowHorizontally or \c asGrowVertically, the control resizes itself to the ideal
+		/// size for its current content; otherwise the specified size is used. Automatic resizing is done, if
+		/// the control's text or font is changed.
+		///
+		/// \sa Text, ClipLastLine, Font, WordWrapping, _IWindowedLabelEvents::ResizedControlWindow,
+		///     AutoSizeConstants
+		[propget, id(DISPID_WLLBL_AUTOSIZE), helpstring("Enables or disables automatic, content-dependent sizing of the control.")]
+		HRESULT AutoSize([out, retval] AutoSizeConstants* pValue);
+		[propput, id(DISPID_WLLBL_AUTOSIZE), helpstring("Enables or disables automatic, content-dependent sizing of the control.")]
+		HRESULT AutoSize([in] AutoSizeConstants newValue);
+		/// \brief <em>Specifies the control's background color</em>
+		///
+		/// Retrieves or sets the control's background color.
+		///
+		/// \sa ForeColor, BackStyle
+		[propget, id(DISPID_WLLBL_BACKCOLOR), helpstring("Retrieves or sets the control's background color.")]
+		HRESULT BackColor([out, retval] OLE_COLOR* pValue);
+		[propput, id(DISPID_WLLBL_BACKCOLOR), helpstring("Retrieves or sets the control's background color.")]
+		HRESULT BackColor([in] OLE_COLOR newValue);
+		/// \brief <em>Controls drawing of the control's background</em>
+		///
+		/// Retrieves or sets how the control's background is drawn. Any of the values defined by the
+		/// \c BackStyleConstants enumeration is valid.
+		///
+		/// \sa BackColor, BackStyleConstants
+		[propget, id(DISPID_WLLBL_BACKSTYLE), helpstring("Retrieves or sets how the control's background is drawn.")]
+		HRESULT BackStyle([out, retval] BackStyleConstants* pValue);
+		[propput, id(DISPID_WLLBL_BACKSTYLE), helpstring("Retrieves or sets how the control's background is drawn.")]
+		HRESULT BackStyle([in] BackStyleConstants newValue);
+		/// \brief <em>Controls the style of the control's inner border</em>
+		///
+		/// Retrieves or sets the kind of inner border that is drawn around the control. Any of the values
+		/// defined by the \c BorderStyleConstants enumeration is valid.
+		///
+		/// \sa Appearance, BorderStyleConstants
+		[propget, id(DISPID_WLLBL_BORDERSTYLE), helpstring("Retrieves or sets the kind of inner border that is drawn around the control.")]
+		HRESULT BorderStyle([out, retval] BorderStyleConstants* pValue);
+		[propput, id(DISPID_WLLBL_BORDERSTYLE), helpstring("Retrieves or sets the kind of inner border that is drawn around the control.")]
+		HRESULT BorderStyle([in] BorderStyleConstants newValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's build number</em>
+		///
+		///   Retrieves the control's build number. This property is part of the fingerprint
+		///   that uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa Version, AppID, AppName, AppShortName, CharSet, IsRelease, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLLBL_BUILD), hidden]
+		HRESULT Build([out, retval] LONG* pValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's character set</em>
+		///
+		///   Retrieves the control's character set (Unicode or ANSI). This property is part of the
+		///   fingerprint that uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppName, AppShortName, Build, IsRelease, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLLBL_CHARSET), hidden]
+		HRESULT CharSet([out, retval] BSTR* pValue);
+		/// \brief <em>Specifies whether the control may display a partially visible last line</em>
+		///
+		/// Retrieves or sets whether the last line of text is drawn if it is only partially visible. If set to
+		/// \c True, only fully visible lines of text are drawn; otherwise the last drawn line of text may be
+		/// clipped and only partially visible. Also, if set to \c True, the text will be drawn like in an edit
+		/// control.
+		///
+		/// \sa Text, AutoSize
+		[propget, id(DISPID_WLLBL_CLIPLASTLINE), helpstring("Retrieves or sets whether the last line of text is drawn if it is only partially visible.")]
+		HRESULT ClipLastLine([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLLBL_CLIPLASTLINE), helpstring("Retrieves or sets whether the last line of text is drawn if it is only partially visible.")]
+		HRESULT ClipLastLine([in] VARIANT_BOOL newValue);
+		/// \brief <em>Controls which events are fired</em>
+		///
+		/// Retrieves or sets the events that won't be fired. Disabling events increases performance.
+		/// Any combination of the values defined by the \c DisabledEventsConstants enumeration is valid.
+		///
+		/// \sa DisabledEventsConstants
+		[propget, id(DISPID_WLLBL_DISABLEDEVENTS), helpstring("Retrieves or sets the events that won't be fired. Disabling events increases performance."), nonbrowsable]
+		HRESULT DisabledEvents([out, retval] DisabledEventsConstants* pValue);
+		[propput, id(DISPID_WLLBL_DISABLEDEVENTS), helpstring("Retrieves or sets the events that won't be fired. Disabling events increases performance."), nonbrowsable]
+		HRESULT DisabledEvents([in] DisabledEventsConstants newValue);
+		/// \brief <em>Controls redrawing of the control</em>
+		///
+		/// Enables or disables automatic redrawing of the control. Disabling redraw while doing large changes
+		/// on the control may increase performance. If set to \c False, the control will redraw itself
+		/// automatically; otherwise not.
+		[propget, id(DISPID_WLLBL_DONTREDRAW), helpstring("Enables or disables automatic redrawing of the control.")]
+		HRESULT DontRedraw([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLLBL_DONTREDRAW), helpstring("Enables or disables automatic redrawing of the control.")]
+		HRESULT DontRedraw([in] VARIANT_BOOL newValue);
+		/// \brief <em>Controls whether the control accepts user input</em>
+		///
+		/// Enables or disables the control for user input. If set to \c True, it reacts to user input;
+		/// otherwise not.
+		[propget, id(DISPID_WLLBL_ENABLED), helpstring("Enables or disables the control for user input.")]
+		HRESULT Enabled([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLLBL_ENABLED), helpstring("Enables or disables the control for user input.")]
+		HRESULT Enabled([in] VARIANT_BOOL newValue);
+		/// \brief <em>Specifies the control's font</em>
+		///
+		/// Retrieves or sets the control's font. It's used to draw the control's content.
+		///
+		/// \sa UseSystemFont, ForeColor
+		[propget, id(DISPID_WLLBL_FONT), helpstring("Retrieves or sets the control's font.")]
+		HRESULT Font([out, retval] IFontDisp** ppFont);
+		[propput, id(DISPID_WLLBL_FONT), helpstring("Retrieves or sets the control's font.")]
+		HRESULT Font([in] IFontDisp* pNewFont);
+		[propputref, id(DISPID_WLLBL_FONT), helpstring("Retrieves or sets the control's font.")]
+		HRESULT Font([in] IFontDisp* pNewFont);
+		/// \brief <em>Specifies the control's text color</em>
+		///
+		/// Retrieves or sets the control's text color.
+		///
+		/// \sa BackColor
+		[propget, id(DISPID_WLLBL_FORECOLOR), helpstring("Retrieves or sets the control's text color.")]
+		HRESULT ForeColor([out, retval] OLE_COLOR* pValue);
+		[propput, id(DISPID_WLLBL_FORECOLOR), helpstring("Retrieves or sets the control's text color.")]
+		HRESULT ForeColor([in] OLE_COLOR newValue);
+		/// \brief <em>Controls the horizontal alignment of the control's content</em>
+		///
+		/// Retrieves or sets the horizontal alignment of the control's content. Any of the values defined by
+		/// the \c HAlignmentConstants enumeration is valid.
+		///
+		/// \sa Text, VAlignment, HAlignmentConstants
+		[propget, id(DISPID_WLLBL_HALIGNMENT), helpstring("Retrieves or sets the horizontal alignment of the control's content.")]
+		HRESULT HAlignment([out, retval] HAlignmentConstants* pValue);
+		[propput, id(DISPID_WLLBL_HALIGNMENT), helpstring("Retrieves or sets the horizontal alignment of the control's content.")]
+		HRESULT HAlignment([in] HAlignmentConstants newValue);
+		/// \brief <em>Controls when the \c MouseHover event is fired</em>
+		///
+		/// Retrieves or sets the number of milliseconds the mouse cursor must be located over the
+		/// control's client area before the \c MouseHover event is fired. If set to -1, the system hover
+		/// time is used.
+		///
+		/// \sa _IWindowlessLabelEvents::MouseHover
+		[propget, id(DISPID_WLLBL_HOVERTIME), helpstring("Retrieves or sets the number of milliseconds the mouse cursor must be located over the control's client area before the 'MouseHover' event is fired.")]
+		HRESULT HoverTime([out, retval] LONG* pValue);
+		[propput, id(DISPID_WLLBL_HOVERTIME), helpstring("Retrieves or sets the number of milliseconds the mouse cursor must be located over the control's client area before the 'MouseHover' event is fired.")]
+		HRESULT HoverTime([in] LONG newValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the control's release type</em>
+		///
+		///   Retrieves the control's release type. This property is part of the fingerprint
+		///   that uniquely identifies each software written by Timo "TimoSoft" Kunze. If set to
+		///   \c True, the control was compiled for release; otherwise it was compiled for debugging.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppName, AppShortName, Build, CharSet, Programmer, Tester
+		/// \endif
+		[propget, id(DISPID_WLLBL_ISRELEASE), hidden]
+		HRESULT IsRelease([out, retval] VARIANT_BOOL* pValue);
+		/// \brief <em>Controls the control's mouse cursor</em>
+		///
+		/// Retrieves or sets a user-defined mouse cursor. It's used if \c MousePointer is set to
+		/// \c mpCustom.
+		///
+		/// \sa MousePointer, MousePointerConstants
+		[propget, id(DISPID_WLLBL_MOUSEICON), helpstring("Retrieves or sets a user-defined mouse cursor.")]
+		HRESULT MouseIcon([out, retval] IPictureDisp** ppMouseIcon);
+		[propput, id(DISPID_WLLBL_MOUSEICON), helpstring("Retrieves or sets a user-defined mouse cursor.")]
+		HRESULT MouseIcon([in] IPictureDisp* pNewMouseIcon);
+		[propputref, id(DISPID_WLLBL_MOUSEICON), helpstring("Retrieves or sets a user-defined mouse cursor.")]
+		HRESULT MouseIcon([in] IPictureDisp* pNewMouseIcon);
+		/// \brief <em>Controls the control's mouse cursor</em>
+		///
+		/// Retrieves or sets the cursor's type that's used if the mouse cursor is placed within the
+		/// control's client area. Any of the values defined by the \c MousePointerConstants enumeration
+		/// is valid.
+		///
+		/// \sa MouseIcon, MousePointerConstants
+		[propget, id(DISPID_WLLBL_MOUSEPOINTER), helpstring("Retrieves or sets the cursor's type that's used if the mouse cursor is placed within the control's client area.")]
+		HRESULT MousePointer([out, retval] MousePointerConstants* pValue);
+		[propput, id(DISPID_WLLBL_MOUSEPOINTER), helpstring("Retrieves or sets the cursor's type that's used if the mouse cursor is placed within the control's client area.")]
+		HRESULT MousePointer([in] MousePointerConstants newValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the name(s) of the control's programmer(s)</em>
+		///
+		///   Retrieves the name(s) of the control's programmer(s). This property is part of the
+		///   fingerprint that uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppName, AppShortName, Build, CharSet, IsRelease, Tester
+		/// \endif
+		[propget, id(DISPID_WLLBL_PROGRAMMER), hidden]
+		HRESULT Programmer([out, retval] BSTR* pValue);
+		/// \brief <em>Controls the control's behavior in drag'n'drop operations</em>
+		///
+		/// Retrieves or sets whether the control is registered as a target for OLE drag'n'drop. If set to
+		/// \c True, the control accepts OLE drag'n'drop actions; otherwise not.
+		///
+		/// \sa SupportOLEDragImages, _IWindowlessLabelEvents::OLEDragEnter
+		[propget, id(DISPID_WLLBL_REGISTERFOROLEDRAGDROP), helpstring("Retrieves or sets whether the control is registered as a target for OLE drag'n'drop.")]
+		HRESULT RegisterForOLEDragDrop([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLLBL_REGISTERFOROLEDRAGDROP), helpstring("Retrieves or sets whether the control is registered as a target for OLE drag'n'drop.")]
+		HRESULT RegisterForOLEDragDrop([in] VARIANT_BOOL newValue);
+		/// \brief <em>Controls the control's right-to-left features</em>
+		///
+		/// Enables or disables bidirectional features. Any combination of the values defined by the
+		/// \c RightToLeftConstants enumeration is valid.
+		///
+		/// \sa RightToLeftConstants
+		[propget, id(DISPID_WLLBL_RIGHTTOLEFT), helpstring("Enables or disables bidirectional features.")]
+		HRESULT RightToLeft([out, retval] RightToLeftConstants* pValue);
+		[propput, id(DISPID_WLLBL_RIGHTTOLEFT), helpstring("Enables or disables bidirectional features.")]
+		HRESULT RightToLeft([in] RightToLeftConstants newValue);
+		/// \brief <em>Controls the control's behavior in drag'n'drop operations</em>
+		///
+		/// Retrieves or sets whether the control creates an \c IDropTargetHelper object, so that a drag image
+		/// can be displayed during OLE drag'n'drop. If set to \c True, the control creates the object;
+		/// otherwise not.
+		///
+		/// \remarks Requires shell32.dll version 5.0 or higher.
+		///
+		/// \sa RegisterForOLEDragDrop, FinishOLEDragDrop,
+		///     <a href="https://msdn.microsoft.com/en-us/library/ms646238.aspx">IDropTargetHelper</a>
+		[propget, id(DISPID_WLLBL_SUPPORTOLEDRAGIMAGES), helpstring("Retrieves or sets whether the control creates an 'IDropTargetHelper' object, so that a drag image can be displayed during OLE drag'n'drop. Requires shell32.dll version 5.0 or higher.")]
+		HRESULT SupportOLEDragImages([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLLBL_SUPPORTOLEDRAGIMAGES), helpstring("Retrieves or sets whether the control creates an 'IDropTargetHelper' object, so that a drag image can be displayed during OLE drag'n'drop. Requires shell32.dll version 5.0 or higher.")]
+		HRESULT SupportOLEDragImages([in] VARIANT_BOOL newValue);
+		/// \if PRIVATEDOC
+		///   \brief <em>Retrieves the name(s) of the control's tester(s)</em>
+		///
+		///   Retrieves the name(s) of the control's tester(s). This property is part of the
+		///   fingerprint that uniquely identifies each software written by Timo "TimoSoft" Kunze.
+		///
+		///   \remarks This property is hidden and read-only.
+		///
+		///   \sa AppID, AppName, AppShortName, Build, CharSet, IsRelease, Programmer
+		/// \endif
+		[propget, id(DISPID_WLLBL_TESTER), hidden]
+		HRESULT Tester([out, retval] BSTR* pValue);
+		/// \brief <em>Specifies the control's content</em>
+		///
+		/// Retrieves or sets the control's content.
+		///
+		/// \remarks This is the control's default property.
+		///
+		/// \sa ClipLastLine, TextTruncationStyle, ForeColor, Font, HAlignment, VAlignment, UseMnemonic,
+		///     AutoSize, WordWrapping, _IWindowlessLabelEvents::TextChanged
+		[propget, id(DISPID_WLLBL_TEXT), helpstring("Retrieves or sets the control's content."), bindable, displaybind, requestedit, defaultbind]
+		HRESULT Text([out, retval] BSTR* pValue);
+		[propput, id(DISPID_WLLBL_TEXT), helpstring("Retrieves or sets the control's content."), bindable, displaybind, requestedit, defaultbind]
+		HRESULT Text([in] BSTR newValue);
+		/// \brief <em>Controls truncation of the control's text if it is too long</em>
+		///
+		/// Retrieves or sets where ellipsis are inserted into the string to visualize that the control's text
+		/// is longer than the control can display. Any of the values defined by the
+		/// \c TextTruncationStyleConstants enumeration is valid.
+		///
+		/// \sa Text, TextTruncationStyleConstants
+		[propget, id(DISPID_WLLBL_TEXTTRUNCATIONSTYLE), helpstring("Retrieves or sets where ellipsis are inserted into the string to visualize that the control's text is longer than the control can display.")]
+		HRESULT TextTruncationStyle([out, retval] TextTruncationStyleConstants* pValue);
+		[propput, id(DISPID_WLLBL_TEXTTRUNCATIONSTYLE), helpstring("Retrieves or sets where ellipsis are inserted into the string to visualize that the control's text is longer than the control can display.")]
+		HRESULT TextTruncationStyle([in] TextTruncationStyleConstants newValue);
+		/// \brief <em>Specifies how ampersands in the control text are handled</em>
+		///
+		/// Retrieves or sets whether the control handles the last ampersand in the control text as accelerator
+		/// key and hides any other ampersands, except if they are escaped by doubling them, i.e. the text
+		/// contains &quot;&amp;&amp;&quot; instead of &quot;&amp;&quot;. If set to \c True, ampersands are
+		/// handled as marking the accelerator key; otherwise they are handled as normal characters.
+		///
+		/// \sa Text
+		[propget, id(DISPID_WLLBL_USEMNEMONIC), helpstring("Retrieves or sets whether the control handles the last ampersand in the control text as accelerator key and hides any other ampersands, except if they are escaped by doubling them, i.e. the text contains '&&' instead of '&'.")]
+		HRESULT UseMnemonic([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLLBL_USEMNEMONIC), helpstring("Retrieves or sets whether the control handles the last ampersand in the control text as accelerator key and hides any other ampersands, except if they are escaped by doubling them, i.e. the text contains '&&' instead of '&'.")]
+		HRESULT UseMnemonic([in] VARIANT_BOOL newValue);
+		/// \brief <em>Specifies whether the control uses the system font</em>
+		///
+		/// Retrieves or sets whether the control uses the MS Shell Dlg font (which is mapped to the system's
+		/// default GUI font) or the font specified by the \c Font property. If set to \c True, the system
+		/// font; otherwise the specified font is used.
+		///
+		/// \sa Font
+		[propget, id(DISPID_WLLBL_USESYSTEMFONT), helpstring("Retrieves or sets whether the control uses the MS Shell Dlg font or the font specified by the 'Font' property.")]
+		HRESULT UseSystemFont([out, retval] VARIANT_BOOL* pValue);
+		[propput, id(DISPID_WLLBL_USESYSTEMFONT), helpstring("Retrieves or sets whether the control uses the MS Shell Dlg font or the font specified by the 'Font' property.")]
+		HRESULT UseSystemFont([in] VARIANT_BOOL newValue);
+		/// \brief <em>Controls the vertical alignment of the control's content</em>
+		///
+		/// Retrieves or sets the vertical alignment of the control's content. Any of the values defined by the
+		/// \c VAlignmentConstants enumeration is valid.
+		///
+		/// \sa Text, HAlignment, VAlignmentConstants
+		[propget, id(DISPID_WLLBL_VALIGNMENT), helpstring("Retrieves or sets the vertical alignment of the control's content.")]
+		HRESULT VAlignment([out, retval] VAlignmentConstants* pValue);
+		[propput, id(DISPID_WLLBL_VALIGNMENT), helpstring("Retrieves or sets the vertical alignment of the control's content.")]
+		HRESULT VAlignment([in] VAlignmentConstants newValue);
+		/// \brief <em>Retrieves the control's version</em>
+		///
+		/// \remarks This property is read-only.
+		[propget, id(DISPID_WLLBL_VERSION), helpstring("Retrieves the control's version."), nonbrowsable]
+		HRESULT Version([out, retval] BSTR* pValue);
+		/// \brief <em>Specifies whether the control wraps the text onto multiple lines</em>
+		///
+		/// Retrieves or sets whether the control's text is wrapped onto multiple lines if it is too wide to
+		/// fit into the control's rectangle. Any of the values defined by the \c WordWrappingConstants
+		/// is valid.
+		///
+		/// \sa Text, AutoSize, WordWrappingConstants
+		[propget, id(DISPID_WLLBL_WORDWRAPPING), helpstring("Retrieves or sets whether the control's text is wrapped onto multiple lines if it is too wide to fit into the control's rectangle.")]
+		HRESULT WordWrapping([out, retval] WordWrappingConstants* pValue);
+		[propput, id(DISPID_WLLBL_WORDWRAPPING), helpstring("Retrieves or sets whether the control's text is wrapped onto multiple lines if it is too wide to fit into the control's rectangle.")]
+		HRESULT WordWrapping([in] WordWrappingConstants newValue);
+
+		/// \brief <em>Displays the control's credits</em>
+		///
+		/// Displays some information about this control and its author.
+		[id(DISPID_WLLBL_ABOUT), helpstring("Displays some information about this control and its author.")]
+		HRESULT About(void);
+		/// \brief <em>Loads the control's settings from the specified file</em>
+		///
+		/// \param[in] file The file to read from.
+		///
+		/// \return \c True if the settings could be loaded; otherwise \c False.
+		///
+		/// \sa SaveSettingsToFile
+		[id(DISPID_WLLBL_LOADSETTINGSFROMFILE), helpstring("Loads the control's settings from the specified file.")]
+		HRESULT LoadSettingsFromFile([in] BSTR file, [out, retval] VARIANT_BOOL* pSucceeded);
+		/// \brief <em>Advises the control to redraw itself</em>
+		[id(DISPID_WLLBL_REFRESH), helpstring("Advises the control to redraw itself.")]
+		HRESULT Refresh(void);
+		/// \brief <em>Saves the control's settings to the specified file</em>
+		///
+		/// \param[in] file The file to write to.
+		///
+		/// \return \c True if the settings could be saved; otherwise \c False.
+		///
+		/// \sa LoadSettingsFromFile
+		[id(DISPID_WLLBL_SAVESETTINGSTOFILE), helpstring("Saves the control's settings to the specified file.")]
+		HRESULT SaveSettingsToFile([in] BSTR file, [out, retval] VARIANT_BOOL* pSucceeded);
+
+		/// \brief <em>Finishes a pending drop operation</em>
+		///
+		/// During a drag'n'drop operation the drag image is displayed until the \c OLEDragDrop event has been
+		/// handled. This order is intended by Microsoft Windows. However, if a message box is displayed from
+		/// within the \c OLEDragDrop event, or the drop operation cannot be performed asynchronously and takes
+		/// a long time, it may be desirable to remove the drag image earlier.\n
+		/// This method will break the intended order and finish the drag'n'drop operation (including removal
+		/// of the drag image) immediately.
+		///
+		/// \remarks This method will fail if not called from the \c OLEDragDrop event handler or if no drag
+		///          images are used.
+		///
+		/// \sa _IWindowlessLabelEvents::OLEDragDrop, SupportOLEDragImages
+		[id(DISPID_WLLBL_FINISHOLEDRAGDROP), helpstring("Finishes a pending drop operation from within the 'OLEDragDrop' event, removing the drag image, but breaking the intended order. See documentation for details.")]
+		HRESULT FinishOLEDragDrop(void);
+	};
+
+
+	/// \interface _IWindowlessLabelEvents
+	/// \author Timo "TimoSoft" Kunze
+	/// \brief <em>The \c WindowlessLabel class' events interface</em>
+	///
+	/// This interface defines all events the \c WindowlessLabel class may raise.
+	///
+	/// \sa IWindowlessLabel
+	[
+		uuid(358BF36E-DB60-4779-AC6E-1B7ED447EFFC),
+		helpstring("IWindowlessLabel-event-interface")
+	]
+	dispinterface _IWindowlessLabelEvents
+	{
+		properties:
+		methods:
+			/// \brief <em>The control's text has changed</em>
+			///
+			/// Will be fired after the control's content has changed.
+			///
+			/// \remarks This is the control's default event.\n
+			///          This event may be disabled.
+			///
+			/// \sa IWindowlessLabel::Text
+			[id(DISPID_WLLBLE_TEXTCHANGED), helpstring("Will be fired after the control's content has changed. This event may be disabled.")]
+			void TextChanged(void);
+			/// \brief <em>The user clicked into the control's client area</em>
+			///
+			/// Will be fired if the user clicks into the control's client area using the left mouse button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the click. This should always
+			///            be \c vbLeftButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the click.
+			///            Any combination of the values defined by VB's \c ShiftConstants enumeration is
+			///            valid.
+			/// \param[in] x The x-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa DblClick, MClick, RClick, XClick, IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_CLICK), helpstring("Will be fired if the user clicks into the control's client area using the left mouse button. This event may be disabled.")]
+			void Click(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The context menu should be displayed</em>
+			///
+			/// Will be fired if the control's context menu should be displayed.
+			///
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the menu's proposed position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the menu's proposed position relative to the
+			///            control's upper-left corner.
+			///
+			/// \sa RClick
+			[id(DISPID_WLLBLE_CONTEXTMENU), helpstring("Will be fired if the control's context menu should be displayed.")]
+			void ContextMenu(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The user double-clicked into the control's client area</em>
+			///
+			/// Will be fired if the user double-clicks into the control's client area using the left mouse
+			/// button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the double-click. This should
+			///            always be \c vbLeftButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the
+			///            double-click. Any combination of the values defined by VB's \c ShiftConstants
+			///            enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa Click, MDblClick, RDblClick, XDblClick, IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_DBLCLICK), helpstring("Will be fired if the user double-clicks into the control's client area using the left mouse button. This event may be disabled.")]
+			void DblClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The user clicked into the control's client area</em>
+			///
+			/// Will be fired if the user clicks into the control's client area using the middle mouse button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the click. This should always
+			///            be \c vbMiddleButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the click.
+			///            Any combination of the values defined by VB's \c ShiftConstants enumeration is
+			///            valid.
+			/// \param[in] x The x-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MDblClick, Click, RClick, XClick, IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_MCLICK), helpstring("Will be fired if the user clicks into the control's client area using the middle mouse button. This event may be disabled.")]
+			void MClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The user double-clicked into the control's client area</em>
+			///
+			/// Will be fired if the user double-clicks into the control's client area using the middle mouse
+			/// button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the double-click. This should
+			///            always be \c vbMiddleButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the
+			///            double-click. Any combination of the values defined by VB's \c ShiftConstants
+			///            enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MClick, DblClick, RDblClick, XDblClick, IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_MDBLCLICK), helpstring("Will be fired if the user double-clicks into the control's client area using the middle mouse button. This event may be disabled.")]
+			void MDblClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>A mouse button was pressed over the control's client area</em>
+			///
+			/// Will be fired if the user presses a mouse button while the mouse cursor is located over the
+			/// control's client area.
+			///
+			/// \param[in] button The pressed mouse button. Any of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseUp, Click, MClick, RClick, XClick, ExtendedMouseButtonConstants,
+			///     IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_MOUSEDOWN), helpstring("Will be fired if the user presses a mouse button while the mouse cursor is located over the control's client area. This event may be disabled.")]
+			void MouseDown(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The mouse cursor was moved into the control's client area</em>
+			///
+			/// Will be fired if the user moved the mouse cursor into the control's client area.
+			///
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseLeave, MouseHover, MouseMove, ExtendedMouseButtonConstants,
+			///     IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_MOUSEENTER), helpstring("Will be fired if the user moved the mouse cursor into the control's client area. This event may be disabled.")]
+			void MouseEnter(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The mouse cursor was moved into the control's client area a specified period of time before</em>
+			///
+			/// Will be fired if the mouse cursor has been located over the control's client area for the number
+			/// of milliseconds specified by the \c IWindowlessLabel::HoverTime property.
+			///
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseEnter, MouseLeave, MouseMove, IWindowlessLabel::HoverTime, ExtendedMouseButtonConstants,
+			///     IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_MOUSEHOVER), helpstring("Will be fired if the mouse cursor has been located over the control's client area for the number of milliseconds specified by the 'HoverTime' property. This event may be disabled.")]
+			void MouseHover(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The mouse cursor was moved out of the control's client area</em>
+			///
+			/// Will be fired if the user moves the mouse cursor out of the control's client area.
+			///
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseEnter, MouseHover, MouseMove, ExtendedMouseButtonConstants,
+			///     IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_MOUSELEAVE), helpstring("Will be fired if the user moves the mouse cursor out of the control's client area. This event may be disabled.")]
+			void MouseLeave(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The mouse cursor was moved over the control's client area</em>
+			///
+			/// Will be fired if the user moves the mouse cursor over the control's client area.
+			///
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseEnter, MouseLeave, MouseDown, MouseUp, ExtendedMouseButtonConstants,
+			///     IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_MOUSEMOVE), helpstring("Will be fired if the user moves the mouse cursor over the control's client area. This event may be disabled.")]
+			void MouseMove(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>A mouse button was released over the control's client area</em>
+			///
+			/// Will be fired if the user releases a mouse button while the mouse cursor is located over the
+			/// control's client area.
+			///
+			/// \param[in] button The released mouse button. Any of the values defined by VB's
+			///            \c MouseButtonConstants enumeration or the \c ExtendedMouseButtonConstants enumeration
+			///            is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the
+			///            control's upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa MouseDown, Click, MClick, RClick, XClick, ExtendedMouseButtonConstants,
+			///     IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_MOUSEUP), helpstring("Will be fired if the user releases a mouse button while the mouse cursor is located over the control's client area. This event may be disabled.")]
+			void MouseUp(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The data was dropped onto the control during OLE drag'n'drop</em>
+			///
+			/// Will be fired during OLE drag'n'drop if the user completes the operation while the mouse cursor
+			/// is located over the control's client area.
+			///
+			/// \param[in] data The dropped data.
+			/// \param[in,out] effect On entry, a bit field of the drop effects (defined by the
+			///                \c OLEDropEffectConstants enumeration) supported by the drag source. On return,
+			///                this paramter must be set to the drop effect that the target finally executed.
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks Don't forget to release any references that you hold to the data object.
+			///
+			/// \sa OLEDragEnter, OLEDragMouseMove, OLEDragLeave, MouseUp,
+			///     IWindowlessLabel::RegisterForOLEDragDrop, IWindowlessLabel::FinishOLEDragDrop,
+			///     OLEDropEffectConstants
+			[id(DISPID_WLLBLE_OLEDRAGDROP), helpstring("Will be fired during OLE drag'n'drop if the user completes the operation while the mouse cursor is located over the control's client area.")]
+			void OLEDragDrop(IOLEDataObject* data, OLEDropEffectConstants* effect, SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The data was dragged into the control during OLE drag'n'drop</em>
+			///
+			/// Will be fired during OLE drag'n'drop if the user moved the mouse cursor into the control's
+			/// client area.
+			///
+			/// \param[in] data The dragged data.
+			/// \param[in,out] effect On entry, a bit field of the drop effects (defined by the
+			///                \c OLEDropEffectConstants enumeration) supported by the drag source. On return,
+			///                this paramter must be set to the drop effect that the target wants to be used on
+			///                drop.
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \sa OLEDragMouseMove, OLEDragLeave, OLEDragDrop, MouseEnter,
+			///     IWindowlessLabel::RegisterForOLEDragDrop, OLEDropEffectConstants
+			[id(DISPID_WLLBLE_OLEDRAGENTER), helpstring("Will be fired during OLE drag'n'drop if the user moved the mouse cursor into the control's client area.")]
+			void OLEDragEnter(IOLEDataObject* data, OLEDropEffectConstants* effect, SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The data was dragged out of the control during OLE drag'n'drop</em>
+			///
+			/// Will be fired during OLE drag'n'drop if the user moves the mouse cursor out of the control's
+			/// client area or if the user canceled the drag'n'drop operation.
+			///
+			/// \param[in] data The dragged data.
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks Don't forget to release any references that you hold to the data object.
+			///
+			/// \sa OLEDragEnter, OLEDragMouseMove, OLEDragDrop, MouseLeave,
+			///     IWindowlessLabel::RegisterForOLEDragDrop
+			[id(DISPID_WLLBLE_OLEDRAGLEAVE), helpstring("Will be fired during OLE drag'n'drop if the user moves the mouse cursor over the control's client area or if the user canceled the drag'n'drop operation.")]
+			void OLEDragLeave(IOLEDataObject* data, SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The data was dragged over the control during OLE drag'n'drop</em>
+			///
+			/// Will be fired during OLE drag'n'drop if the user moves the mouse cursor over the control's
+			/// client area.
+			///
+			/// \param[in] data The dragged data.
+			/// \param[in,out] effect On entry, a bit field of the drop effects (defined by the
+			///                \c OLEDropEffectConstants enumeration) supported by the drag source. On return,
+			///                this paramter must be set to the drop effect that the target wants to be used on
+			///                drop.
+			/// \param[in] button The pressed mouse buttons. Any combination of the values defined by VB's
+			///            \c MouseButtonConstants enumeration is valid.
+			/// \param[in] shift The pressed modifier keys (Shift, Ctrl, Alt). Any combination of the values
+			///            defined by VB's \c ShiftConstants enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the mouse cursor's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \sa OLEDragEnter, OLEDragLeave, OLEDragDrop, MouseMove, IWindowlessLabel::RegisterForOLEDragDrop,
+			///     OLEDropEffectConstants
+			[id(DISPID_WLLBLE_OLEDRAGMOUSEMOVE), helpstring("Will be fired during OLE drag'n'drop if the user moves the mouse cursor over the control's client area.")]
+			void OLEDragMouseMove(IOLEDataObject* data, OLEDropEffectConstants* effect, SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The user clicked into the control's client area</em>
+			///
+			/// Will be fired if the user clicks into the control's client area using the right mouse button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the click. This should always
+			///            be \c vbRightButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the click.
+			///            Any combination of the values defined by VB's \c ShiftConstants enumeration is
+			///            valid.
+			/// \param[in] x The x-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa ContextMenu, RDblClick, Click, MClick, XClick, IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_RCLICK), helpstring("Will be fired if the user clicks into the control's client area using the right mouse button. This event may be disabled.")]
+			void RClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The user double-clicked into the control's client area</em>
+			///
+			/// Will be fired if the user double-clicks into the control's client area using the right mouse
+			/// button.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the double-click. This should
+			///            always be \c vbRightButton (defined by VB's \c MouseButtonConstants enumeration).
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the
+			///            double-click. Any combination of the values defined by VB's \c ShiftConstants
+			///            enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa RClick, DblClick, MDblClick, XDblClick, IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_RDBLCLICK), helpstring("Will be fired if the user double-clicks into the control's client area using the right mouse button. This event may be disabled.")]
+			void RDblClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The control window was resized</em>
+			///
+			/// Will be fired after the control window was resized.
+			///
+			/// \sa IWindowedLabel::AutoSize
+			[id(DISPID_WLLBLE_RESIZEDCONTROLWINDOW), helpstring("Will be fired after the control window was resized.")]
+			void ResizedControlWindow(void);
+			/// \brief <em>The user clicked into the control's client area</em>
+			///
+			/// Will be fired if the user clicks into the control's client area using one of the extended mouse
+			/// buttons.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the click. This should always
+			///            be a constant defined by the \c ExtendedMouseButtonConstants enumeration.
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the click.
+			///            Any combination of the values defined by VB's \c ShiftConstants enumeration is
+			///            valid.
+			/// \param[in] x The x-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa XDblClick, Click, MClick, RClick, IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_XCLICK), helpstring("Will be fired if the user clicks into the control's client area using one of the extended mouse buttons. This event may be disabled.")]
+			void XClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			/// \brief <em>The user double-clicked into the control's client area</em>
+			///
+			/// Will be fired if the user double-clicks into the control's client area using one of the extended
+			/// mouse buttons.
+			///
+			/// \param[in] button The mouse buttons that were pressed during the double-click. This should
+			///            be a constant defined by the \c ExtendedMouseButtonConstants enumeration.
+			/// \param[in] shift The modifier keys (Shift, Ctrl, Alt) that were pressed during the
+			///            double-click. Any combination of the values defined by VB's \c ShiftConstants
+			///            enumeration is valid.
+			/// \param[in] x The x-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			/// \param[in] y The y-coordinate (in twips) of the double-click's position relative to the control's
+			///            upper-left corner.
+			///
+			/// \remarks This event may be disabled.
+			///
+			/// \sa XClick, DblClick, MDblClick, RDblClick, IWindowlessLabel::DisabledEvents
+			[id(DISPID_WLLBLE_XDBLCLICK), helpstring("Will be fired if the user double-clicks into the control's client area using one of the extended mouse buttons. This event may be disabled.")]
+			void XDblClick(SHORT button, SHORT shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+	};
+
+
+	/// \author Timo "TimoSoft" Kunze
+	/// \brief <em>The \c WindowlessLabel class</em>
+	///
+	/// The control's main COM class. It implements the \c IWindowlessLabel and
+	/// \c _IWindowlessLabelEvents interfaces.
+	///
+	/// \sa IWindowlessLabel, _IWindowlessLabelEvents
+	[
+		uuid(6C105C86-C1F8-4A32-820A-CD631DCC19E9),
+		version(1.2),
+		helpstring("WindowlessLabel Control 1.2 (ANSI)")
+	]
+	coclass WindowlessLabel
+	{
+		[default] interface IWindowlessLabel;
+		[default, source] dispinterface _IWindowlessLabelEvents;
+	};
+
+
+	[
+		uuid(50145F39-C007-4224-86E2-980867787046),
+		version(1.2),
+		noncreatable,
+		helpstring("StringProperties Class 1.2 (ANSI)"),
+		hidden
+	]
+	coclass StringProperties
+	{
+		[default] interface IUnknown;
+	};
+
+
+	[
+		uuid(022CEA7C-845D-4E9D-85A4-733CB7833E8A),
+		version(1.2),
+		noncreatable,
+		helpstring("CommonProperties Class 1.2 (ANSI)"),
+		hidden
+	]
+	coclass CommonProperties
+	{
+		[default] interface IUnknown;
+	};
+};

@@ -1,0 +1,44 @@
+HKCR
+{
+	LblCtlsU.WindowedLabel.1 = s 'TimoSoft WindowedLabel Control 1.2 (Unicode)'
+	{
+		CLSID = s '{BC7EE35E-EB21-4A4E-883B-901EA040771B}'
+		'Insertable'
+	}
+	LblCtlsU.WindowedLabel = s 'TimoSoft WindowedLabel Control 1.2 (Unicode)'
+	{
+		CLSID = s '{BC7EE35E-EB21-4A4E-883B-901EA040771B}'
+		CurVer = s 'LblCtlsU.WindowedLabel.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {BC7EE35E-EB21-4A4E-883B-901EA040771B} = s 'TimoSoft WindowedLabel Control 1.2 (Unicode)'
+		{
+			ProgID = s 'LblCtlsU.WindowedLabel.1'
+			VersionIndependentProgID = s 'LblCtlsU.WindowedLabel'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			ForceRemove 'Implemented Categories'
+			{
+				'{40FC6ED4-2438-11CF-A3DB-080036F12502}'
+				'{40FC6ED5-2438-11CF-A3DB-080036F12502}'
+				'{0DE86A57-2BAA-11CF-A229-00AA003D7352}'
+				'{0DE86A53-2BAA-11CF-A229-00AA003D7352}'
+				'{157083E1-2368-11cf-87B9-00AA006C8166}'
+			}
+			val AppID = s '%APPID%'
+			ForceRemove 'Control'
+			ForceRemove 'Insertable'
+			ForceRemove 'ToolboxBitmap32' = s '%MODULE%, 2'
+			'MiscStatus' = s '0'
+			{
+				'1' = s '%OLEMISC%'
+			}
+			'TypeLib' = s '{B6CC61F6-3F1A-4B00-9918-13F66F185263}'
+			'Version' = s '1.2'
+		}
+	}
+}

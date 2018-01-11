@@ -1,0 +1,9 @@
+; LblCtlsA.def: Declares the module parameters. (ANSI version)
+
+LIBRARY      "LblCtlsA.ocx"
+
+EXPORTS
+	DllCanUnloadNow		PRIVATE
+	DllGetClassObject	PRIVATE
+	DllRegisterServer	PRIVATE
+	DllUnregisterServer	PRIVATE

@@ -1,0 +1,25 @@
+HKCR
+{
+	LblCtlsU.Link.1 = s 'TimoSoft Link Class 1.2 (Unicode)'
+	{
+		CLSID = s '{92424EE3-7EF6-4917-97D6-9C5336193AA0}'
+	}
+	LblCtlsU.Link = s 'TimoSoft Link Class (Unicode)'
+	{
+		CLSID = s '{92424EE3-7EF6-4917-97D6-9C5336193AA0}'
+		CurVer = s 'LblCtlsU.Link.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {92424EE3-7EF6-4917-97D6-9C5336193AA0} = s 'TimoSoft Link Class (Unicode)'
+		{
+			ProgID = s 'LblCtlsU.Link.1'
+			VersionIndependentProgID = s 'LblCtlsU.Link'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			'TypeLib' = s '{B6CC61F6-3F1A-4B00-9918-13F66F185263}'
+		}
+	}
+}

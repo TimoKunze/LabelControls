@@ -1,0 +1,79 @@
+The following parts of the Static and SysLink API (Windows 10) are not used:
+
+Control styles:
+---------------
+- LWS_TRANSPARENT (https://msdn.microsoft.com/en-us/library/cc136543.aspx)
+	-> it's not clear how this style has to be used
+- SS_BITMAP (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> currently we support only text
+- SS_[BLACK|GRAY|WHITE]FRAME (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> this feature doesn't seem useful nowadays
+- SS_[BLACK|GRAY|WHITE]RECT (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> this feature doesn't seem useful nowadays
+- SS_CENTERIMAGE (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> currently we support only text
+- SS_ENHMETAFILE (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> currently we support only text
+- SS_ETCHEDFRAME (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> could be used to create some kind of frame
+	-> it seems like overkill to use a non-windowless control for such tasks
+- SS_ETCHEDHORZ (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> could be used to create a horizontal 3D line
+	-> it seems like overkill to use a non-windowless control for such tasks
+- SS_ETCHEDVERT (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> could be used to create a vertical 3D line
+	-> it seems like overkill to use a non-windowless control for such tasks
+- SS_ICON (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> currently we support only text
+- SS_LEFTNOWORDWRAP (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> this feature doesn't seem very useful
+- SS_NOTIFY (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> we don't use the notifications, so we don't need this style
+- SS_REALSIZECONTROL (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> requires comctl32.dll 6.0 or newer.
+	-> currently we support only text
+- SS_REALSIZEIMAGE (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> currently we support only text
+- SS_RIGHTJUST (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> currently we support only text
+- SS_SIMPLE (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> this feature doesn't seem very useful
+- SS_SUNKEN (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> we're using WS_EX_STATICEDGE instead
+- SS_USERITEM (https://msdn.microsoft.com/en-us/library/bb760773.aspx)
+	-> seems to be similar to SS_OWNERDRAW
+
+Messages:
+---------
+- LM_GETIDEALHEIGHT (https://msdn.microsoft.com/en-us/library/bb760716.aspx)
+	-> we're using LM_GETIDEALSIZE instead
+	-> could be implemented nevertheless, because it also works with comctl32.dll 6.0, unlike LM_GETIDEALSIZE which requires comctl32.dll 6.10 or newer
+- STM_GETICON (https://msdn.microsoft.com/en-us/library/bb760775.aspx)
+	-> currently we support only text
+- STM_GETIMAGE (https://msdn.microsoft.com/en-us/library/bb760778.aspx)
+	-> currently we support only text
+- STM_SETICON (https://msdn.microsoft.com/en-us/library/bb760780.aspx)
+	-> currently we support only text
+- STM_SETIMAGE (https://msdn.microsoft.com/en-us/library/bb760782.aspx)
+	-> currently we support only text
+
+Notifications:
+--------------
+- STN_CLICKED (https://msdn.microsoft.com/en-us/library/bb760784.aspx)
+	-> we're detecting clicks based on WM_LBUTTONDOWN and WM_LBUTTONUP
+- STN_DBLCLK (https://msdn.microsoft.com/en-us/library/bb760786.aspx)
+	-> we're using WM_LBUTTONDBLCLK instead
+- STN_DISABLE (https://msdn.microsoft.com/en-us/library/bb787520.aspx)
+	-> raising an event if the control is disabled seems like overkill
+- STN_ENABLE (https://msdn.microsoft.com/en-us/library/bb787522.aspx)
+	-> raising an event if the control is enabled seems like overkill
+
+Structures:
+-----------
+
+Flags:
+------
+
+
+Functions:
+----------
