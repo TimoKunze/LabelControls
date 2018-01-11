@@ -10,10 +10,10 @@
 #define VERSION_MINOR																2
 #define VERSION_REVISION1														4
 #define VERSION_REVISION2														0
-#define VERSION_BUILD																103
-#define STRFILEVERSION															"1.2.4.103"
+#define VERSION_BUILD																105
+#define STRFILEVERSION															"1.2.4.105"
 #define STRPRODUCTVERSION														"1.2"
-#define STRTIMESTAMP																"2018/01/10 23:44:26"
+#define STRTIMESTAMP																"2018/01/11 22:17:56"
 
 #define IDB_SYSLINK																	1
 #define IDB_WINDOWEDLABEL														2
