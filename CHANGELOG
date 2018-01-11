@@ -1,0 +1,79 @@
+Version 1.2.4 - DD/MM/YYYY
+
+- Project published on GitHub.
+
+
+
+Version 1.2.3 - 04/02/2017
+
+- Fixed storing the WindowlessLabel control's TextTruncationStyle property.
+
+
+
+Version 1.2.2 - 30/07/2016
+
+- Fixed some memory leaks that occurred when firing certain events.
+
+
+
+Version 1.2.1 - 29/01/2016
+
+- FIX: The controls could crash during OLE drag'n'drop.
+- FIX: The controls could crash the other process during OLE drag'n'drop, especially when IOLEDataObject::SetDropDescription() had been called.
+
+
+
+Version 1.2.0 - 23/01/2016
+
+- Added the FinishOLEDragDrop method to each control. It should not be used if not really needed. It can be used to hide the drag image if execution of the OLEDragDrop event takes a long time or if a message is displayed from within this event.
+- Initial support for Windows 10.
+
+
+
+Version 1.1.0 - 06/07/2014
+
+- Added the XClick, and XDblClick events for support of the extended mouse buttons.
+- Extended the Mouse* events to support the extended mouse buttons.
+- FIX: The Font and MouseIcon properties could leak GDI resources.
+- Initial support for Windows 8.1.
+
+
+
+Version 1.0.5 - 17/10/2013
+
+- Reimplemented the fix for the drawing issues of the WindowlessLabel control. The previous version had unwanted side effects.
+- Reimplemented the MouseLeave event of the WindowlessLabel control. Now the control doesn't capture the mouse anymore, so that mouse events are dispatched to the correct control even in complex scenarios where the WindowlessLabel control is partially covered by another windowless control.
+- FIX: The IWindowlessLabel::MousePointer property did not work.
+- Reactivated data-binding capabilities. When the library is registered, it will call regtlib.exe msdatsrc.tlb before registering itself. This seems to fix the mess caused by the broken Windows Update from the beginning of this year.
+
+
+
+Version 1.0.4 - 06/10/2013
+
+- FIX: The WindowlessLabel control crashed, if the AutoSize property has been set to 1 or 2.
+- Fixed drawing issues of the WindowlessLabel control.
+- Slightly reduced GDI resource usage.
+
+
+
+Version 1.0.3 - 13/07/2013
+
+- FIX: A UserControl containing the WindowedLabel control could not be selected in the IDE by clicking on it, if the contained WindowedLabel control has been hit.
+
+
+
+Version 1.0.2 - 29/03/2013
+
+- Disabled data-binding capabilities as they cause "Object library not registered" errors when adding the control library to the project. This problem might be related to a recent Windows Update.
+
+
+
+Version 1.0.1 - 09/03/2013
+
+- Fixed drawing issues with the WindowlessLabel control for right-to-left layouts.
+
+
+
+Version 1.0.0 - 27/01/2013
+
+- First public release.
