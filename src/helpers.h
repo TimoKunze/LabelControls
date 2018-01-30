@@ -448,11 +448,11 @@ HBITMAP LoadJPGResource(UINT jpgToLoad);
 		/// \brief <em>If \c TRUE, the part is a link; otherwise it is plain text</em>
 		BOOL isLink;
 		/// \brief <em>If the part is a link, this member contains the link ID</em>
-		WTL::CString ID;
+		CString ID;
 		/// \brief <em>If the part is a link, this member contains the link URL</em>
-		WTL::CString URL;
+		CString URL;
 		/// \brief <em>Contains the text that is displayed for the part</em>
-		WTL::CString text;
+		CString text;
 	} DOCITEM, *LPDOCITEM;
 
 	#ifdef USE_STL
@@ -466,7 +466,7 @@ HBITMAP LoadJPGResource(UINT jpgToLoad);
 		///                Each part is described by a \c DOCITEM struct.
 		///
 		/// \sa DOCITEM, SysLink
-		void ParseSysLinkText(WTL::CString& text, std::vector<DOCITEM>& documentItems);
+		void ParseSysLinkText(CString& text, std::vector<DOCITEM>& documentItems);
 	#else
 		/// \brief <em>Parses the text of a \c SysLink control and extracts the document parts</em>
 		///
@@ -478,7 +478,7 @@ HBITMAP LoadJPGResource(UINT jpgToLoad);
 		///                Each part is described by a \c DOCITEM struct.
 		///
 		/// \sa DOCITEM, SysLink
-		void ParseSysLinkText(WTL::CString& text, CAtlList<DOCITEM>& documentItems);
+		void ParseSysLinkText(CString& text, CAtlList<DOCITEM>& documentItems);
 	#endif
 #endif
 

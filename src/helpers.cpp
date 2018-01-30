@@ -581,9 +581,9 @@ HBITMAP LoadJPGResource(UINT jpgToLoad)
 	}
 
 	#ifdef USE_STL
-		void ParseSysLinkText(WTL::CString& text, std::vector<DOCITEM>& documentItems)
+		void ParseSysLinkText(CString& text, std::vector<DOCITEM>& documentItems)
 	#else
-		void ParseSysLinkText(WTL::CString& text, CAtlList<DOCITEM>& documentItems)
+		void ParseSysLinkText(CString& text, CAtlList<DOCITEM>& documentItems)
 	#endif
 	{
 		// based on ReactOS code (syslink.c, SYSLINK_ParseText, revision 57553)
@@ -1176,7 +1176,7 @@ HIMAGELIST SetupStateImageList(HIMAGELIST hStateImageList)
 
 					HBITMAP hPreviousBitmap = memoryDC.SelectBitmap(bitmap);
 
-					WTL::CRect rc(0, 0, iconSize.cx, iconSize.cy);
+					CRect rc(0, 0, iconSize.cx, iconSize.cy);
 					SIZE partSize;
 					themingEngine.GetThemePartSize(memoryDC, BP_CHECKBOX, CBS_MIXEDNORMAL, NULL, TS_TRUE, &partSize);
 					rc.OffsetRect((iconSize.cx - partSize.cx) / 2, (iconSize.cy - partSize.cy) / 2);

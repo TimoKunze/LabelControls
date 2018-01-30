@@ -16,7 +16,7 @@
 #include "LblCtlsU.h"
 #include "_ILinksEvents_CP.h"
 #include "helpers.h"
-#include "CWindowEx.h"
+#include "CWindowEx2.h"
 #include "SysLink.h"
 #include "Link.h"
 

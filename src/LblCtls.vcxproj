@@ -514,7 +514,7 @@
     <ClCompile Include="TargetOLEDataObject.cpp" />
     <ClCompile Include="WindowedLabel.cpp" />
     <ClCompile Include="WindowlessLabel.cpp" />
-    <ClCompile Include="CWindowEx.cpp" />
+    <ClCompile Include="CWindowEx2.cpp" />
     <ClCompile Include="StringProperties.cpp" />
     <ClCompile Include="SysLink.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - ANSI|Win32'">true</ExcludedFromBuild>
@@ -624,7 +624,7 @@
     <ClInclude Include="WindowedLabel.h" />
     <ClInclude Include="WindowlessLabel.h" />
     <ClInclude Include="CompilerFlags.h" />
-    <ClInclude Include="CWindowEx.h" />
+    <ClInclude Include="CWindowEx2.h" />
     <ClInclude Include="DispIDs.h" />
     <ClInclude Include="SysLink.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - ANSI|Win32'">true</ExcludedFromBuild>

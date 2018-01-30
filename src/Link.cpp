@@ -3,7 +3,7 @@
 #include "stdafx.h"
 #include "Link.h"
 #include "ClassFactory.h"
-#include "CWindowEx.h"
+#include "CWindowEx2.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -264,9 +264,9 @@ STDMETHODIMP Link::put_ID(BSTR newValue)
 
 	CComBSTR bstr;
 	CWindow(hWndSysLink).GetWindowText(&bstr);
-	WTL::CString text = bstr;
-	WTL::CString newID = newValue;
-	WTL::CString newControlText = TEXT("");
+	CString text = bstr;
+	CString newID = newValue;
+	CString newControlText = TEXT("");
 
 	#ifdef USE_STL
 		std::vector<DOCITEM> documentItems;
@@ -363,7 +363,7 @@ STDMETHODIMP Link::get_Text(BSTR* pValue)
 
 	CComBSTR bstr;
 	CWindow(hWndSysLink).GetWindowText(&bstr);
-	WTL::CString text = bstr;
+	CString text = bstr;
 
 	#ifdef USE_STL
 		std::vector<DOCITEM> documentItems;
@@ -409,9 +409,9 @@ STDMETHODIMP Link::put_Text(BSTR newValue)
 
 	CComBSTR bstr;
 	CWindow(hWndSysLink).GetWindowText(&bstr);
-	WTL::CString text = bstr;
-	WTL::CString newText = newValue;
-	WTL::CString newControlText = TEXT("");
+	CString text = bstr;
+	CString newText = newValue;
+	CString newControlText = TEXT("");
 
 	#ifdef USE_STL
 		std::vector<DOCITEM> documentItems;
@@ -503,9 +503,9 @@ STDMETHODIMP Link::put_URL(BSTR newValue)
 
 	CComBSTR bstr;
 	CWindow(hWndSysLink).GetWindowText(&bstr);
-	WTL::CString text = bstr;
-	WTL::CString newURL = newValue;
-	WTL::CString newControlText = TEXT("");
+	CString text = bstr;
+	CString newURL = newValue;
+	CString newControlText = TEXT("");
 
 	#ifdef USE_STL
 		std::vector<DOCITEM> documentItems;

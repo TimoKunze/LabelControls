@@ -867,7 +867,7 @@ void WindowlessLabel::DrawCaption(CDCHandle& targetDC, RECT& contentRectangle)
 				}
 			} else {
 				COLE2T converter(properties.text);
-				WTL::CRect requiredRectangle = contentRectangle;
+				CRect requiredRectangle = contentRectangle;
 				requiredRectangle.bottom = 0x7FFFFFFF;
 				targetDC.DrawText(converter, textLength, &requiredRectangle, flags | DT_TOP | DT_CALCRECT);
 
@@ -3124,8 +3124,8 @@ void WindowlessLabel::DoAutoSize(void)
 				flags |= DT_NOPREFIX;
 			}
 
-			WTL::CRect windowRectangle = m_rcPos;
-			WTL::CRect contentRectangle;
+			CRect windowRectangle = m_rcPos;
+			CRect contentRectangle;
 			if(properties.autoSize == asGrowVertically) {
 				contentRectangle.left = 0;
 				contentRectangle.right = windowRectangle.Width();
@@ -3218,9 +3218,9 @@ inline HRESULT WindowlessLabel::Raise_ContextMenu(SHORT button, SHORT shift, OLE
 			// the event was caused by the keyboard
 			/*if(properties.processContextMenuKeys) {
 				// propose the middle of the control's client rectangle as the menu's position
-				WTL::CRect clientRectangle;
+				CRect clientRectangle;
 				GetClientRect(&clientRectangle);
-				WTL::CPoint centerPoint = clientRectangle.CenterPoint();
+				CPoint centerPoint = clientRectangle.CenterPoint();
 				x = centerPoint.x;
 				y = centerPoint.y;
 			} else {*/
