@@ -1,6 +1,6 @@
 <p align=center>
-  <a href="https://github.com/TimoKunze/LabelControls/releases/tag/1.2.4">
-    <img alt="Release 1.2.4 Release" src="https://img.shields.io/badge/release-1.2.4-0688CB.svg">
+  <a href="https://github.com/TimoKunze/LabelControls/releases/tag/1.2.5">
+    <img alt="Release 1.2.5 Release" src="https://img.shields.io/badge/release-1.2.5-0688CB.svg">
   </a>
   <a href="https://github.com/TimoKunze/LabelControls/releases">
     <img alt="Download LabelControls" src="https://img.shields.io/badge/download-latest-0688CB.svg">

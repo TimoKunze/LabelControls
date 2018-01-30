@@ -214,7 +214,7 @@ Begin VB.Form frmMain
       UseSystemFont   =   -1  'True
       VAlignment      =   0
       WordWrapping    =   1
-      Text            =   "frmMain.frx":0264
+      Text            =   "frmMain.frx":0268
    End
    Begin LblCtlsLibUCtl.WindowlessLabel lblU 
       Height          =   495
@@ -254,7 +254,7 @@ Begin VB.Form frmMain
       UseSystemFont   =   -1  'True
       VAlignment      =   0
       WordWrapping    =   1
-      Text            =   "frmMain.frx":02D6
+      Text            =   "frmMain.frx":02DA
    End
 End
 Attribute VB_Name = "frmMain"
