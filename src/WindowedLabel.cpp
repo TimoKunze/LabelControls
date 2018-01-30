@@ -3210,12 +3210,12 @@ void WindowedLabel::DoAutoSize(void)
 		if(hMemoryDC) {
 			HGDIOBJ hPreviousFont = SelectObject(hMemoryDC, GetFont());
 
-			DWORD flags = DT_CALCRECT | DT_TOP;
+			DWORD drawTextFlags = DT_CALCRECT | DT_TOP;
 			if(properties.autoSize == asGrowVertically) {
-				flags |= DT_WORDBREAK;
+				drawTextFlags |= DT_WORDBREAK;
 			}
 			if(!properties.useMnemonic) {
-				flags |= DT_NOPREFIX;
+				drawTextFlags |= DT_NOPREFIX;
 			}
 			CRect windowRectangle;
 			CRect contentRectangle;
@@ -3225,7 +3225,7 @@ void WindowedLabel::DoAutoSize(void)
 				contentRectangle.right = windowRectangle.Width();
 			}
 			COLE2T converter(properties.text);
-			DrawText(hMemoryDC, converter, -1, &contentRectangle, flags);
+			DrawText(hMemoryDC, converter, -1, &contentRectangle, drawTextFlags);
 
 			AdjustWindowRectEx(&contentRectangle, GetStyle(), FALSE, GetExStyle());
 			GetWindowRect(&windowRectangle);

@@ -808,68 +808,68 @@ void WindowlessLabel::DrawCaption(CDCHandle& targetDC, RECT& contentRectangle)
 			extendedStyle |= WS_EX_LAYOUTRTL;
 		}
 
-		DWORD flags = 0;
+		DWORD drawTextFlags = 0;
 		if(!properties.clipLastLine) {
-			flags |= DT_EDITCONTROL;
+			drawTextFlags |= DT_EDITCONTROL;
 		}
 		switch(properties.hAlignment) {
 			case halLeft:
-				flags |= (extendedStyle & WS_EX_LAYOUTRTL ? DT_RIGHT : DT_LEFT);
+				drawTextFlags |= (extendedStyle & WS_EX_LAYOUTRTL ? DT_RIGHT : DT_LEFT);
 				break;
 			case halCenter:
-				flags |= DT_CENTER;
+				drawTextFlags |= DT_CENTER;
 				break;
 			case halRight:
-				flags |= (extendedStyle & WS_EX_LAYOUTRTL ? DT_LEFT : DT_RIGHT);
+				drawTextFlags |= (extendedStyle & WS_EX_LAYOUTRTL ? DT_LEFT : DT_RIGHT);
 				break;
 		}
 		if(properties.rightToLeft & rtlText) {
-			flags |= DT_RTLREADING;
+			drawTextFlags |= DT_RTLREADING;
 		}
 		switch(properties.textTruncationStyle) {
 			case ttsEndEllipsis:
-				flags |= DT_END_ELLIPSIS;
+				drawTextFlags |= DT_END_ELLIPSIS;
 				break;
 			case ttsWordEllipsis:
-				flags |= DT_WORD_ELLIPSIS;
+				drawTextFlags |= DT_WORD_ELLIPSIS;
 				break;
 			case ttsPathEllipsis:
-				flags |= DT_PATH_ELLIPSIS;
+				drawTextFlags |= DT_PATH_ELLIPSIS;
 				break;
 		}
 		if(!properties.useMnemonic) {
-			flags |= DT_NOPREFIX;
+			drawTextFlags |= DT_NOPREFIX;
 		}
 		switch(properties.wordWrapping) {
 			case wwAutomatic:
-				flags |= DT_WORDBREAK;
+				drawTextFlags |= DT_WORDBREAK;
 				break;
 			case wwSingleLine:
-				flags |= DT_SINGLELINE;
+				drawTextFlags |= DT_SINGLELINE;
 				break;
 		}
-		if(flags & DT_RIGHT) {
+		if(drawTextFlags & DT_RIGHT) {
 			contentRectangle.right--;
 		}
 
 		if(properties.vAlignment != valTop) {
-			if(flags & DT_SINGLELINE) {
+			if(drawTextFlags & DT_SINGLELINE) {
 				switch(properties.vAlignment) {
 					case valTop:
-						flags |= DT_TOP;
+						drawTextFlags |= DT_TOP;
 						break;
 					case valCenter:
-						flags |= DT_VCENTER;
+						drawTextFlags |= DT_VCENTER;
 						break;
 					case valBottom:
-						flags |= DT_BOTTOM;
+						drawTextFlags |= DT_BOTTOM;
 						break;
 				}
 			} else {
 				COLE2T converter(properties.text);
 				CRect requiredRectangle = contentRectangle;
 				requiredRectangle.bottom = 0x7FFFFFFF;
-				targetDC.DrawText(converter, textLength, &requiredRectangle, flags | DT_TOP | DT_CALCRECT);
+				targetDC.DrawText(converter, textLength, &requiredRectangle, drawTextFlags | DT_TOP | DT_CALCRECT);
 
 				switch(properties.vAlignment) {
 					case valCenter:
@@ -880,7 +880,7 @@ void WindowlessLabel::DrawCaption(CDCHandle& targetDC, RECT& contentRectangle)
 						contentRectangle.top = contentRectangle.bottom - requiredRectangle.Height();
 						break;
 				}
-				flags |= DT_TOP;
+				drawTextFlags |= DT_TOP;
 			}
 		}
 
@@ -893,10 +893,10 @@ void WindowlessLabel::DrawCaption(CDCHandle& targetDC, RECT& contentRectangle)
 			drawAccel = ((SendMessage(hWndParent, WM_QUERYUISTATE, 0, 0) & UISF_HIDEACCEL) == 0);
 		}
 		if(!drawAccel) {
-			flags |= DT_HIDEPREFIX;
+			drawTextFlags |= DT_HIDEPREFIX;
 		}
 		COLE2T converter(properties.text);
-		targetDC.DrawText(converter, textLength, &contentRectangle, flags);
+		targetDC.DrawText(converter, textLength, &contentRectangle, drawTextFlags);
 	}
 }
 
@@ -1741,7 +1741,7 @@ STDMETHODIMP WindowlessLabel::DoVerb(LONG verbID, LPMSG pMessage, IOleClientSite
 			HRESULT hr = IOleObjectImpl<WindowlessLabel>::DoVerb(verbID, pMessage, pActiveSite, reserved, hWndParent, pBoundingRectangle);
 			if(DoesVerbActivate(verbID)) {
 				if(m_spInPlaceSite && !flags.hasSubclassedParentWindow) {
-					HWND hWndParent = NULL;
+					hWndParent = NULL;
 					m_spInPlaceSite->GetWindow(&hWndParent);
 					if(::IsWindow(hWndParent)) {
 						flags.hasSubclassedParentWindow = SetWindowSubclass(hWndParent, WindowlessLabel::ParentWindowSubclass, reinterpret_cast<UINT_PTR>(this), NULL);
@@ -3089,39 +3089,39 @@ void WindowlessLabel::DoAutoSize(void)
 			}
 			HGDIOBJ hPreviousFont = SelectObject(hMemoryDC, properties.font.currentFont);
 
-			DWORD flags = DT_CALCRECT | DT_LEFT | DT_TOP;
+			DWORD drawTextFlags = DT_CALCRECT | DT_LEFT | DT_TOP;
 			if(properties.autoSize == asGrowHorizontally) {
 				switch(properties.wordWrapping) {
 					case wwSingleLine:
-						flags |= DT_SINGLELINE;
+						drawTextFlags |= DT_SINGLELINE;
 						break;
 				}
 			} else if(properties.autoSize == asGrowVertically) {
 				switch(properties.wordWrapping) {
 					case wwAutomatic:
-						flags |= DT_WORDBREAK;
+						drawTextFlags |= DT_WORDBREAK;
 						break;
 					case wwSingleLine:
-						flags |= DT_SINGLELINE;
+						drawTextFlags |= DT_SINGLELINE;
 						break;
 				}
 			}
 			if(!properties.clipLastLine) {
-				flags |= DT_EDITCONTROL;
+				drawTextFlags |= DT_EDITCONTROL;
 			}
 			switch(properties.textTruncationStyle) {
 				case ttsEndEllipsis:
-					flags |= DT_END_ELLIPSIS;
+					drawTextFlags |= DT_END_ELLIPSIS;
 					break;
 				case ttsWordEllipsis:
-					flags |= DT_WORD_ELLIPSIS;
+					drawTextFlags |= DT_WORD_ELLIPSIS;
 					break;
 				case ttsPathEllipsis:
-					flags |= DT_PATH_ELLIPSIS;
+					drawTextFlags |= DT_PATH_ELLIPSIS;
 					break;
 			}
 			if(!properties.useMnemonic) {
-				flags |= DT_NOPREFIX;
+				drawTextFlags |= DT_NOPREFIX;
 			}
 
 			CRect windowRectangle = m_rcPos;
@@ -3131,7 +3131,7 @@ void WindowlessLabel::DoAutoSize(void)
 				contentRectangle.right = windowRectangle.Width();
 			}
 			COLE2T converter(properties.text);
-			DrawText(hMemoryDC, converter, -1, &contentRectangle, flags);
+			DrawText(hMemoryDC, converter, -1, &contentRectangle, drawTextFlags);
 
 			DWORD windowStyle = WS_CHILDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
 			switch(properties.borderStyle) {
@@ -3459,8 +3459,8 @@ inline HRESULT WindowlessLabel::Raise_MouseMove(SHORT button, SHORT shift, OLE_X
 	}
 
 	if(!mouseStatus.hoveredControl) {
-		UINT mouseHoverHeight = 0;
-		UINT mouseHoverWidth = 0;
+		LONG mouseHoverHeight = 0;
+		LONG mouseHoverWidth = 0;
 		SystemParametersInfo(SPI_GETMOUSEHOVERHEIGHT, 0, &mouseHoverHeight, 0);
 		SystemParametersInfo(SPI_GETMOUSEHOVERWIDTH, 0, &mouseHoverWidth, 0);
 		RECT mouseHoverRect = {mouseStatus.hoverStartPosition.x - (mouseHoverWidth >> 1), mouseStatus.hoverStartPosition.y - (mouseHoverHeight >> 1), mouseStatus.hoverStartPosition.x + (mouseHoverWidth >> 1), mouseStatus.hoverStartPosition.y + (mouseHoverHeight >> 1)};

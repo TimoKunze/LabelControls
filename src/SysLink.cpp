@@ -2691,11 +2691,11 @@ STDMETHODIMP SysLink::HitTest(OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y, HitTestConst
 	}
 
 	if(IsWindow()) {
-		UINT flags = static_cast<UINT>(*pHitTestDetails);
-		int linkIndex = HitTest(x, y, &flags);
+		UINT hitTestFlags = static_cast<UINT>(*pHitTestDetails);
+		int linkIndex = HitTest(x, y, &hitTestFlags);
 
 		if(pHitTestDetails) {
-			*pHitTestDetails = static_cast<HitTestConstants>(flags);
+			*pHitTestDetails = static_cast<HitTestConstants>(hitTestFlags);
 		}
 		ClassFactory::InitLink(linkIndex, this, IID_ILink, reinterpret_cast<LPUNKNOWN*>(ppHitLink));
 		return S_OK;
@@ -3398,13 +3398,13 @@ LRESULT SysLink::OnSetText(UINT message, WPARAM wParam, LPARAM lParam, BOOL& /*w
 			SHORT shift = 0;
 			WPARAM2BUTTONANDSHIFT(-1, button, shift);
 			if(linkUnderMouse >= 0) {
-				CComPtr<ILink> pLink = ClassFactory::InitLink(linkUnderMouse, this);
+				pLink = ClassFactory::InitLink(linkUnderMouse, this);
 				Raise_LinkMouseLeave(pLink, button, shift, mousePosition.x, mousePosition.y, static_cast<HitTestConstants>(hitTestDetails));
 			}
 
 			linkUnderMouse = newLinkUnderMouse;
 			if(linkUnderMouse >= 0) {
-				CComPtr<ILink> pLink = ClassFactory::InitLink(linkUnderMouse, this);
+				pLink = ClassFactory::InitLink(linkUnderMouse, this);
 				Raise_LinkMouseEnter(pLink, button, shift, mousePosition.x, mousePosition.y, static_cast<HitTestConstants>(hitTestDetails));
 			}
 		}
@@ -4851,9 +4851,9 @@ int SysLink::HitTest(LONG x, LONG y, UINT* pFlags)
 {
 	ATLASSERT(IsWindow());
 
-	UINT flags = 0;
+	UINT hitTestFlags = 0;
 	if(pFlags) {
-		flags = *pFlags;
+		hitTestFlags = *pFlags;
 	}
 	LHITTESTINFO hitTestInfo = {{x, y}, {0}};
 	int linkIndex = -1;
@@ -4867,28 +4867,28 @@ int SysLink::HitTest(LONG x, LONG y, UINT* pFlags)
 		if(SendMessage(LM_HITTEST, 0, reinterpret_cast<LPARAM>(&hitTestInfo))) {
 			linkIndex = hitTestInfo.item.iLink;
 			if(linkIndex >= 0) {
-				flags |= SLHT_LINK;
+				hitTestFlags |= SLHT_LINK;
 			} else {
-				flags |= SLHT_TEXTORBACKGROUND;
+				hitTestFlags |= SLHT_TEXTORBACKGROUND;
 			}
 		} else {
-			flags |= SLHT_TEXTORBACKGROUND;
+			hitTestFlags |= SLHT_TEXTORBACKGROUND;
 		}
 	} else {
 		if(x < windowRectangle.left) {
-			flags |= SLHT_TOLEFT;
+			hitTestFlags |= SLHT_TOLEFT;
 		} else if(x > windowRectangle.right) {
-			flags |= SLHT_TORIGHT;
+			hitTestFlags |= SLHT_TORIGHT;
 		}
 		if(y < windowRectangle.top) {
-			flags |= SLHT_ABOVE;
+			hitTestFlags |= SLHT_ABOVE;
 		} else if(y > windowRectangle.bottom) {
-			flags |= SLHT_BELOW;
+			hitTestFlags |= SLHT_BELOW;
 		}
 	}
 
 	if(pFlags) {
-		*pFlags = flags;
+		*pFlags = hitTestFlags;
 	}
 	return linkIndex;
 }
